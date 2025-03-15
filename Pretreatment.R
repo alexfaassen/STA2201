@@ -1,3 +1,10 @@
 ### Data Pretreatment ###
 
-## Load Data
+## Setup
+setwd("./Data")
+
+## Libraries
+library(png)
+
+## Load Stats
+pokemon = read.csv("")
