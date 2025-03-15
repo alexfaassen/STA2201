@@ -1,0 +1,57 @@
+---
+title: "Report"
+author: "Alex Faassen"
+date: "2025-04-04"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Abstract
+
+- Report Summary
+
+# Introduction
+
+- Research Question
+- Motivation
+
+# Data
+
+- Data description + overview
+
+# Exploratory Data Analysis
+
+- Data pretreatment
+
+## Image Dimension Reduction
+
+- Image PCA
+
+## Pokemon Type Clustering Patterns
+
+- Image PCA results
+- t-SNE/UMAP on Pokemon Type
+
+# Modelling
+
+## Unsupervised Model
+
+- e.g. Weighted K-means
+
+## Supervised Model
+
+- e.g. Log reg, KNN, LDA
+
+# Model Comparison
+
+- Compare unsupervised vs. supervised model performances
+
+# Conclusion
+
+- Report summary
+- Result interpretations
+- Future investigations
+
