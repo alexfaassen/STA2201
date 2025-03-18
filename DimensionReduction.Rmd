@@ -66,15 +66,25 @@ plotImg <- function(img_raster) {
 ```{r}
 ## PCA
 # Defaults: center = TRUE, scale. = FALSE
-PCA = prcomp(images[,-1]) #scale = TRUE)
+PCA = prcomp(images[,-1], center = TRUE, scale = FALSE) #scale = TRUE)
 
 sum_PCA = summary(PCA)
 ```
 
 ```{r}
 ## Biplot
+# Colours
+stats$type1 = factor(stats$type1)
+# unique(stats$type1)
+# type_colours = c("#A6B91A", "#705746", "#6F35FC", "#")
+type_colours = c("#7AC74C", "#EE8130", "#6390F0", "#A6B91A", "#A8A77A", "#A33EA1",
+            "#F7D02C", "#E2BF65", "#D685AD", "#CC2E28", "#F95587", "#B6A136", "#735797",
+            "#96D9D6", "#6F35FC", "#705746", "#B7B7CE", "#A98FF3")
+names(type_colours) = unique(stats$type1)
+
 # library(ggfortify)
 autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), shape = FALSE, color = "stats$type1", label = TRUE, label.label = "stats$name", scale = 0) +
+  scale_colour_manual(values = type_colours) +
   theme(legend.position = "none")
 ```
 
@@ -93,7 +103,7 @@ pca_data$type1 <- stats$type1  # Primary type for reference
 smallest_pc1_pokemon <- pca_data[order(pca_data$PC1), ][1:2, ]
 
 # Print result
-print(smallest_pc1_pokemon)
+print(rownames(smallest_pc1_pokemon))
 ```
 
 ```{r}
@@ -104,11 +114,17 @@ pos2 = plotImg(getImg(images[stats$name == "Abomasnow", -1]))
 neg1 = plotImg(getImg(images[stats$name == "Elgyem", -1])) # Pikipek
 neg2 = plotImg(getImg(images[stats$name == "Geodude", -1])) # Unown
 # exPlots = sapply(c(pos1, pos2, neg1, neg2), function(rgba) plotImg(getImg(rgba)))
-(pos1 + pos2) / (neg1 + neg2)
+# (pos1 + pos2) / (neg1 + neg2)
+final_plot = (pos1 + labs(title = "Most Positive PC1: Wailord") +
+              pos2 + labs(title = "Second Positive PC1: Abomasnow")) /
+             (neg1 + labs(title = "Most Negative PC1: Elgyem") +
+              neg2 + labs(title = "Second Negative PC1: Geodude"))
+print(final_plot)
 
 # Loading Vector
 pca = PCA$rotation[,1]
 pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
+# pca_norm = (pca - mean(pca))/(2 * sd(pca))
 plotImg(getImg(pca_norm))
 ```
 
@@ -140,29 +156,29 @@ barplot(ve)+
   ylab("cumulative variance explained")+
   ylim(0, 1)+
   geom_hline(aes(yintercept = 0.9), linewidth = 1, linetype = "dashed") +
-  geom_hline(aes(yintercept = 0.95), linewidth = 1, linetype = "dashed", color = "red")
+  geom_hline(aes(yintercept = 0.95), linewidth = 1, linetype = "dashed", color = "red") +
+  geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue") +  # Highlight selected PC count
+  annotate("text", x = num_pcs + 5, y = 0.5, label = paste0(num_pcs, " PCs retained"), color = "blue")
 
-# Retain PCs
+## Retain PCs
 var_retain = 0.95 # 95% of VE
+num_pcs = min(which(ve >= var_retain)); num_pcs
 dr_images = data.frame(
   image_path = images$image_path,
-  PCA$x[,which(ve <= var_retain)]
+  PCA$x[,1:num_pcs]
 )
+```
+
+# Save Dataset
+
+```{r}
+## Save Dataset
+save(stats, dr_images, file = "Data/dr_pokemon.RData")
 ```
 
 # Local Dimension Reduction
 
 ```{r}
 #
-```
-
-# Save Dataset
-
-```{r}
-## Dimension Reduced Images
-# dr_images = data.frame()
-
-## Save Dataset
-save(stats, dr_images, file = "Data/dr_pokemon.RData")
 ```
 
