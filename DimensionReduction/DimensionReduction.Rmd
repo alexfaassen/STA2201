@@ -220,10 +220,13 @@ See whether non-linear clustering might work better.
 ## UMAP
 
 ```{r}
-## UMAP
-library(umap)
+# ## UMAP
+# library(umap)
+# 
+# UMAP_imgs = umap(images[,-1])
 
-UMAP_imgs = umap(images[,-1])
+## Load object
+load("DimensionReduction/umap_pokemon.rds")
 
 # Plot
 type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
@@ -236,7 +239,7 @@ ggplot(umap_df, aes(x, y, color = type)) +
   ggtitle("UMAP Projection")
 
 ## Save object
-save(UMAP_imgs, file = "DimensionReduction/umap_pokemon.rds")
+# save(UMAP_imgs, file = "DimensionReduction/umap_pokemon.rds")
 ```
 
 ## Kernel PCA
