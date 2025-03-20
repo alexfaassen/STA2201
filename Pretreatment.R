@@ -42,7 +42,7 @@ image_list = list.files("images", pattern = "*.png") %>% paste("images/", ., sep
 # Helper fn
 flatten_img = function(img_path) {
   img = readPNG(img_path) # Read image as raster array (dim: [120, 120, 4])
-  return(as.vector(img)) # Flatten to vector
+  return(as.vector(img[,,-4])) # Flatten to vector + Remove Alpha
 }
 
 # Image Dataset

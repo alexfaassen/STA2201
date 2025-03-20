@@ -22,7 +22,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 ## Load Data
-# load("Data/pokemon.RData")
+# setwd("./Data")
+load("Data/pokemon.RData")
 
 ## Libraries
 library(ggplot2)
@@ -53,7 +54,7 @@ barplot = function(values){
 getImg = function(flat_img){
   # matrix(unlist(gsvalues), 120, 120, 4, byrow = T)
   # rasterGrob(array(flat_img, dim = c(120, 120, 4)))
-  array(as.numeric(flat_img), dim = c(120, 120, 4))
+  array(as.numeric(flat_img), dim = c(120, 120, 3)) # (120, 120, 4)
 }
 
 plotImg <- function(img_raster) {
@@ -132,8 +133,8 @@ print(final_plot)
 pca = PCA$rotation[,1]
 pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
 # pca_norm = (pca - mean(pca))/(2 * sd(pca))
-pca_clip = pmax(pmin(pca, 1), 0)
-plotImg(getImg(pca_clip))
+# pca_clip = pmax(pmin(pca, 1), 0)
+plotImg(getImg(pca_norm))
 ```
 
 ```{r}
@@ -164,7 +165,7 @@ plotImg(getImg(pca_norm))
 ve = summary(PCA)$importance[3,]
 
 ## Retain PCs
-var_retain = 0.95 # 95% of VE
+var_retain = 0.8 # % of VE
 num_pcs = min(which(ve >= var_retain)); num_pcs
 dr_images = data.frame(
   image_path = images$image_path,
@@ -220,7 +221,8 @@ print(sbs)
 
 ```{r}
 ## Save Dataset
-save(stats, dr_images, file = "Data/dr_pokemon.RData")
+# save(stats, dr_images, file = "Data/dr_pokemon.RData")
+save(stats, dr_images, file = "Data/dr_pokemon2.RData")
 ```
 
 # Non-linear methods
@@ -255,13 +257,21 @@ See whether non-linear clustering might work better.
 ## UMAP
 
 ```{r}
+<<<<<<< HEAD
 # ## UMAP
+=======
+## UMAP
+>>>>>>> dim_reduct
 # library(umap)
 # 
 # UMAP_imgs = umap(images[,-1])
 
+<<<<<<< HEAD
 ## Load object
 load("DimensionReduction/umap_pokemon.rds")
+=======
+# load("DimensionReduction/UMAP_imgs.rds")
+>>>>>>> dim_reduct
 
 # Plot
 type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
