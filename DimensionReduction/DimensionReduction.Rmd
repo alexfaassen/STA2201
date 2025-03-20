@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 ## Load Data
-load("Data/pokemon.RData")
+# load("Data/pokemon.RData")
 
 ## Libraries
 library(ggplot2)
@@ -132,7 +132,8 @@ print(final_plot)
 pca = PCA$rotation[,1]
 pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
 # pca_norm = (pca - mean(pca))/(2 * sd(pca))
-plotImg(getImg(pca_norm))
+pca_clip = pmax(pmin(pca, 1), 0)
+plotImg(getImg(pca_clip))
 ```
 
 ```{r}
@@ -162,6 +163,14 @@ plotImg(getImg(pca_norm))
 ## Variance Explained
 ve = summary(PCA)$importance[3,]
 
+## Retain PCs
+var_retain = 0.95 # 95% of VE
+num_pcs = min(which(ve >= var_retain)); num_pcs
+dr_images = data.frame(
+  image_path = images$image_path,
+  PCA$x[,1:num_pcs]
+)
+
 # Plot
 barplot(ve)+
   xlab("principal component")+
@@ -171,14 +180,40 @@ barplot(ve)+
   geom_hline(aes(yintercept = 0.95), linewidth = 1, linetype = "dashed", color = "red") +
   geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue") +  # Highlight selected PC count
   annotate("text", x = num_pcs + 5, y = 0.5, label = paste0(num_pcs, " PCs retained"), color = "blue")
+```
 
-## Retain PCs
-var_retain = 0.95 # 95% of VE
-num_pcs = min(which(ve >= var_retain)); num_pcs
-dr_images = data.frame(
-  image_path = images$image_path,
-  PCA$x[,1:num_pcs]
-)
+## Visualize Compressed Images
+
+```{r}
+## Abomasnow
+pokemon = which(stats$name == "Abomasnow")
+# Original image
+og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original")
+# Compressed image
+scores = (as.numeric(images[pokemon, -1]) - PCA$center) %*% PCA$rotation
+scores_95VE = scores[, 1:num_pcs, drop = FALSE] %*% t(PCA$rotation[, 1:num_pcs]) + PCA$center
+# scores_95VE_norm = (scores_95VE - min(scores_95VE)) / (max(scores_95VE) - min(scores_95VE))
+scores_95VE_clip = pmax(pmin(scores_95VE, 1), 0)
+compressed = plotImg(getImg(scores_95VE_clip)) +
+  labs(title = paste("PCA Reconstructed (", num_pcs, " PCs)", sep=""))
+# Side by side
+sbs = og + compressed
+print(sbs)
+
+## Gardevoir
+pokemon = which(stats$name == "Gardevoir")
+# Original image
+og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original")
+# Compressed image
+scores = (as.numeric(images[pokemon, -1]) - PCA$center) %*% PCA$rotation
+scores_95VE = scores[, 1:num_pcs, drop = FALSE] %*% t(PCA$rotation[, 1:num_pcs]) + PCA$center
+# scores_95VE_norm = (scores_95VE - min(scores_95VE)) / (max(scores_95VE) - min(scores_95VE))
+scores_95VE_clip = pmax(pmin(scores_95VE, 1), 0)
+compressed = plotImg(getImg(scores_95VE_clip)) +
+  labs(title = paste("PCA Reconstructed (", num_pcs, " PCs)", sep=""))
+# Side by side
+sbs = og + compressed
+print(sbs)
 ```
 
 # Save Dataset
