@@ -188,12 +188,26 @@ scatterplot(pca_stats_df, kmeans_pp$centers, kmeans_pp$cluster)
 
 ```
 
+
+Visualize cluster on actual labels
+
+```{r}
+ggplot(data = pca_stats_df, aes(x = PC1, y = PC2, color = stats$type1)) +
+  geom_point() +
+  labs(title = "PCA of Pokemon Clusters by Type",
+       x = "PC1", y = "PC2") +
+  scale_color_manual(values = rainbow(length(unique(stats$type1))))
+
+
+```
+
 Visualize K-means results using two principal components
 
 ```{r}
 fviz_cluster(kmeans_stats, data = pca_stats_df[,1:2], geom = "point", 
              main = "K-means Clustering")
 ```
+
 
 
 K means on optimal K = 3 (using elbow method)

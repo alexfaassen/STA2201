@@ -169,6 +169,17 @@ scatterplot(pca_data, kmeans_imgs$centers, kmeans_imgs$cluster)
 
 scatterplot(pca_data, kmeans_pp$centers, kmeans_pp$cluster)
 ```
+
+Visualize cluster on actual labels
+```{r}
+ggplot(data = pca_data, aes(x = PC1, y = PC2, color = stats$type1)) +
+  geom_point() +
+  labs(title = "PCA of Pokemon Clusters by Type",
+       x = "PC1", y = "PC2") +
+  scale_color_manual(values = rainbow(length(unique(stats$type1))))
+
+```
+
 K-means results (using the first two principal components for visualization)
 ```{r}
 fviz_cluster(kmeans_imgs, data = pca_data[,1:2], geom = "point", 
@@ -187,6 +198,7 @@ dist_matrix <- dist(pca_data, method="euclidean")
 hclust_pca <- hclust(dist_matrix, method = "complete")
 plot(hclust_pca, labels = FALSE, main = "Hierarchical Clustering Dendrogram")
 ```
+
 
 
 
