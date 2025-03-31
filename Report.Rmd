@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Abstract
 
 - Report Summary
+- Link GitHub?
 
 ## Contributions:
 
@@ -55,25 +56,120 @@ This structured dataset contains 41 variables for 801 Pokémon. These features i
 All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values. **Notably**, We only consider primary type labels for this project to maintain a single-label classification structure.
 
 ```{r include = FALSE}
+## Libraries
+library(png)
+library(ggplot2)
+library(dplyr)
+library(forcats)
+library(tidyr)
+
 ## Load Data
 load("Data/pokemon.RData")
 ```
 
-```{r echo = FALSE}
-## Visuals
+```{r echo=FALSE}
+## TO DO: Visuals
 # - Table of summary stats for key features
 # - Histogram of pokemon by primary type
 # - Boxplots comparing attack/sp_attack across types
+
+## Table of summary stats for key features
+key_features <- c("hp", "attack", "defense", "sp_attack", "sp_defense", "speed", "height_m", "weight_kg")
+
+# Summary stats
+summary_table <- stats %>%
+  select(all_of(key_features)) %>%
+  summarise(across(everything(), list(
+    mean = ~round(mean(.x, na.rm = TRUE), 2),
+    sd = ~round(sd(.x, na.rm = TRUE), 2),
+    min = ~min(.x, na.rm = TRUE),
+    q1 = ~quantile(.x, 0.25, na.rm = TRUE),
+    median = ~median(.x, na.rm = TRUE),
+    q3 = ~quantile(.x, 0.75, na.rm = TRUE),
+    max = ~max(.x, na.rm = TRUE)
+  ), .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("Feature", "Statistic"),
+               names_pattern = "^(.*)_(mean|sd|min|q1|median|q3|max)$",
+               values_to = "Value") %>%
+  pivot_wider(names_from = Statistic, values_from = Value)
+
+# Print
+print(summary_table)
+```
+
+```{r echo=FALSE}
+type_cols <- c(
+  "bug" = "#A8B820", "dark" = "#705848", "dragon" = "#7038F8", "electric" = "#F8D030",
+  "fairy" = "#EE99AC", "fighting" = "#C03028", "fire" = "#F08030", "flying" = "#A890F0",
+  "ghost" = "#705898", "grass" = "#78C850", "ground" = "#E0C068", "ice" = "#98D8D8",
+  "normal" = "#A8A878", "poison" = "#A040A0", "psychic" = "#F85888", "rock" = "#B8A038",
+  "steel" = "#B8B8D0", "water" = "#6890F0"
+)
+
+# Top N primary types (by freq)
+top5_types <- stats %>%
+  mutate(type1 = tolower(type1)) %>%
+  count(type1, sort = TRUE) %>%
+  top_n(5, n)
+
+filtered_data <- stats %>%
+  mutate(type1 = tolower(type1)) %>%
+  filter(type1 %in% top5_types$type1) %>%
+  mutate(type1 = fct_infreq(type1)) 
+
+## Bar chart of pokemon by primary type
+type_freq = ggplot(filtered_data, aes(x = fct_infreq(type1), fill = type1)) +
+  geom_bar() +
+  scale_fill_manual(values = type_cols) +
+  labs(
+    title = "Top 5 Pokémon Types",
+    x = "Primary Type",
+    y = "Count"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "left")
+
+## Boxplots comparing attack/defense across types
+# Boxplot of Attack by Type
+type_attack = ggplot(filtered_data, aes(x = type1, y = attack, fill = type1)) +
+  geom_boxplot() +
+  scale_fill_manual(values = type_cols) +
+  labs(
+    title = "Attack Stat Distributions",
+    x = "Primary Type",
+    y = "Attack Stat"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+
+# Print
+type_freq + type_attack
 ```
 
 ## 2. Pokémon Image Dataset
 
 **URL:** [Pokemon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
 
-The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha) colour and transparency assignments of each pixel.
+The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha), the colour and transparency assignments of each pixel.
 
 ```{r echo = FALSE}
 ## TO DO: Side by side pictures of 2 pokemon with their name + primary type
+# Libraries
+library(png)
+library(ggplot2)
+library(patchwork)
+
+# Pokemon
+ex1 = readPNG("Data/images/pikachu.png")
+ex2 = readPNG("Data/images/charizard.png")
+p1 = ggplot()+
+  annotation_raster(ex1,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
+  labs(title = "Pikachu")
+p2 = ggplot()+
+  annotation_raster(ex2,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
+  labs(title = "Charizard")
+print(p1 + p2)
 ```
 
 ## Pre-processing
@@ -88,7 +184,7 @@ For the images, we begin by flattening each PNG into a (120x120x4) 57600-element
 
 - Image PCA
 
-## Pokemon Type Clustering Patterns
+### Pokemon Type Clustering Patterns
 
 - Image PCA results
 - t-SNE/UMAP on Pokemon Type

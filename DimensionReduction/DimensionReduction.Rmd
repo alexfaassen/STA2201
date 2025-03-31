@@ -138,7 +138,7 @@ plotImg(getImg(pca_norm))
 ```
 
 ```{r}
-## PC1
+## PC2
 # Extremes
 pos1 = plotImg(getImg(images[stats$name == "Slowking", -1]))
 pos2 = plotImg(getImg(images[stats$name == "Gardevoir", -1]))
@@ -257,21 +257,13 @@ See whether non-linear clustering might work better.
 ## UMAP
 
 ```{r}
-<<<<<<< HEAD
 # ## UMAP
-=======
-## UMAP
->>>>>>> dim_reduct
 # library(umap)
 # 
 # UMAP_imgs = umap(images[,-1])
 
-<<<<<<< HEAD
 ## Load object
 load("DimensionReduction/umap_pokemon.rds")
-=======
-# load("DimensionReduction/UMAP_imgs.rds")
->>>>>>> dim_reduct
 
 # Plot
 type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
