@@ -1,7 +1,8 @@
 ---
-title: "Dimension Reduction"
-author: "Alex Faassen"
-date: "2025-03-18"
+title: "Predicting Pokémon Types Using Clustering and Classification"
+subtitle: "Code Submission"
+author: "Justin Zhang, Isaac Baguisa, Alex Faassen"
+date: "2025-04-04"
 output: pdf_document
 ---
 
@@ -9,26 +10,84 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-**To Do:**
-- PCA
-  - Biplot
-  - Loading vectors
-  - Variance explained (Scree plot)
-- Compare with t-SNE/UMAP: is there a non-linear element?
-  - Numeric comparisons (e.g. "silhouette score" - comparisons against labels)?
-- Save output
+**Note:** Commented out unnecessary "test" outputs.
 
-# Setup
+# Data
+
+## Pre-processing
 
 ```{r}
-## Load Data
-# setwd("./Data")
-load("../Data/pokemon.RData")
-
-## Libraries
+library(png)
 library(ggplot2)
-library(ggfortify)
+library(dplyr)
+
+setwd("Data")
+
+## Load Stats
+stats = read.csv("pokemon_stats.csv", header = TRUE)
+# Check
+# str(stats)
+# Image path
+stats$image_path = paste0("images/", tolower(stats$name.simple), ".png")
+# Check
+# head(stats$image_path)
+
+## Load Image Registry
+img_reg = read.csv("pokemon_img.csv", header = TRUE)
+# Has Image
+stats$has_img = tolower(stats$name.simple) %in% img_reg$Name
+# No Img
+stats[!stats$has_img, "name"]
+
+## Load Images
+# Test: Abomasnow
+abomasnow = readPNG("images/abomasnow.png")
+ggplot()+
+  annotation_raster(abomasnow,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf)
+# Pixels
+# str(abomasnow)
+pix = prod(dim(abomasnow)[1:2])
+
+# Image List
+image_list = list.files("images", pattern = "*.png") %>% paste("images/", ., sep = "")
+
+# Helper fn
+flatten_img = function(img_path) {
+  img = readPNG(img_path) # Read image as raster array (dim: [120, 120, 4])
+  return(as.vector(img[,,-4])) # Flatten to vector + Remove Alpha
+}
+
+# Image Dataset
+images = sapply(image_list, flatten_img) %>% t() %>% as.data.frame() %>%
+  mutate(image_path = image_list) %>% select(image_path, everything())
+# colnames(images) = c("image_path", rep())
+# Check
+images[1:5, 1:5]
+# str(images)
+
+## Match Datasets
+# Match the rows to represent the same pokemon, in the same order.
+images = images %>%
+  semi_join(stats, by = "image_path") %>%
+  arrange(match(image_path, stats$image_path))
+# Check
+mean(stats$image_path == images$image_path)
+
+## Save Datasets
+# save(stats, images, file = "pokemon.RData")
+```
+
+## EDA Visuals
+
+```{r}
+#
+```
+
+# Image Dimension Reduction
+
+```{r}
 library(patchwork)
+library(ggfortify)
 
 ## Helper functions
 barplot = function(values){
@@ -39,17 +98,6 @@ barplot = function(values){
     scale_fill_gradient2(low="#619CFF", mid="white", high="#F8766D")+
     theme_bw()
 }
-
-# heatmap = function(A){
-#   n = nrow(A)
-#   p = ncol(A)  
-#   df = data.frame(value = c(A),  i = 1:n, j = rep(1:p, rep(n, p)))
-#   ggplot(df, aes(j, i, fill = value)) + 
-#     geom_tile(color = "black")+
-#     scale_fill_gradient2(low="#619CFF", mid="white", high="#F8766D")+
-#     scale_y_reverse()+
-#     theme_void()
-# }
 
 getImg = function(flat_img){
   # matrix(unlist(gsvalues), 120, 120, 4, byrow = T)
@@ -65,20 +113,14 @@ plotImg <- function(img_raster) {
 }
 ```
 
-# PCA
+## PCA
 
 ```{r}
 ## PCA
 # Defaults: center = TRUE, scale. = FALSE
-# PCA = prcomp(images[,-1], center = TRUE, scale. = FALSE) #scale = TRUE)
-
-# ## Load object
-load("pca.rds")
+PCA = prcomp(images[,-1], center = TRUE, scale. = FALSE) #scale = TRUE)
 
 sum_PCA = summary(PCA)
-
-## Save object
-# save(PCA, file = "pca.rds")
 ```
 
 ```{r}
@@ -97,15 +139,9 @@ autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), shape = FALSE,
   theme(legend.position = "none")
 
 # Without labels, just types.
-pca_biplot = autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), label = FALSE, shape = 16, color = "stats$type1", scale = 0) +
+autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), label = FALSE, shape = 16, color = "stats$type1", scale = 0) +
   scale_colour_manual(values = type_colours) +
-  theme(legend.position = "none") +
-  theme_minimal() +
-  labs(title = "Biplot: PC1 vs. PC2")
-pca_biplot
-
-## Save object
-save(pca_biplot, file = "pca_biplot.rds")
+  theme(legend.position = "none")
 ```
 
 ## Loading Vectors
@@ -170,7 +206,7 @@ pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
 plotImg(getImg(pca_norm))
 ```
 
-# Variance Explained
+## Variance Explained
 
 ```{r}
 ## Variance Explained
@@ -185,20 +221,14 @@ dr_images = data.frame(
 )
 
 # Plot
-pca_scree = barplot(ve)+
-  xlab("Principal Component")+
-  ylab("Cumulative Variance Explained")+
-  labs(title = "Variance Explained by PCs")+
+barplot(ve)+
+  xlab("principal component")+
+  ylab("cumulative variance explained")+
   ylim(0, 1)+
-  geom_hline(aes(yintercept = 0.8), linewidth = 1, linetype = "dashed", color = "red") +
+  geom_hline(aes(yintercept = 0.9), linewidth = 1, linetype = "dashed") +
   geom_hline(aes(yintercept = 0.95), linewidth = 1, linetype = "dashed", color = "red") +
   geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue") +  # Highlight selected PC count
-  annotate("text", x = num_pcs + 5, y = 0.5, label = paste0(num_pcs, " PCs retained"), color = "blue")+
-  theme(legend.position = "none")
-pca_scree
-
-## Save object
-save(pca_scree, file = "pca_scree.rds")
+  annotate("text", x = num_pcs + 5, y = 0.5, label = paste0(num_pcs, " PCs retained"), color = "blue")
 ```
 
 ## Visualize Compressed Images
@@ -207,7 +237,7 @@ save(pca_scree, file = "pca_scree.rds")
 ## Abomasnow
 pokemon = which(stats$name == "Abomasnow")
 # Original image
-og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original: Abomasnow")
+og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original")
 # Compressed image
 scores = (as.numeric(images[pokemon, -1]) - PCA$center) %*% PCA$rotation
 scores_95VE = scores[, 1:num_pcs, drop = FALSE] %*% t(PCA$rotation[, 1:num_pcs]) + PCA$center
@@ -218,9 +248,6 @@ compressed = plotImg(getImg(scores_95VE_clip)) +
 # Side by side
 sbs = og + compressed
 print(sbs)
-
-## Save object
-save(sbs, file = "img_compress.rds")
 
 ## Gardevoir
 pokemon = which(stats$name == "Gardevoir")
@@ -238,85 +265,21 @@ sbs = og + compressed
 print(sbs)
 ```
 
-# Save Dataset
+# Clustering
 
 ```{r}
-## Save Dataset
-# save(stats, dr_images, file = "../Data/dr_pokemon2.RData")
+#
 ```
 
-# Non-linear methods
-
-See whether non-linear clustering might work better.
-
-## t-SNE
+# Classification
 
 ```{r}
-## COULDN'T RUN: Kept hitting stack overflow protection
-
-# ## t-SNE
-# library(Rtsne)
-# 
-# TSNE_imgs = Rtsne(images[,-1], perplexity = 5) # Adjust perplexity for different structures
-#   # Original call: perplexity = 30
-# 
-# # Plot
-# type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
-# 
-# tsne_df = data.frame(x = TSNE_imgs$Y[,1], y = TSNE_imgs$Y[,2], type = stats$type1)
-# ggplot(tsne_df, aes(x, y, color = type)) +
-#   geom_point(alpha = 0.7) +
-#   theme_minimal() +
-#   scale_colour_manual(values = type_colours) +
-#   ggtitle("t-SNE Projection")
-# 
-# ## Save object
-# save(TSNE_imgs, file = "DimensionReduction/tsne_pokemon.rds")
+#
 ```
 
-## UMAP
+# Results
 
 ```{r}
-# ## UMAP
-# library(umap)
-# 
-# UMAP_imgs = umap(images[,-1])
-
-## Load object
-load("umap_pokemon.rds")
-
-# Plot
-type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
-
-umap_df = data.frame(x = UMAP_imgs$layout[,1], y = UMAP_imgs$layout[,2], type = stats$type1)
-ggplot(umap_df, aes(x, y, color = type)) +
-  geom_point(alpha = 0.7) +
-  theme_minimal() +
-  scale_colour_manual(values = type_colours) +
-  ggtitle("UMAP Projection")
-
-## Save object
-# save(UMAP_imgs, file = "umap_pokemon.rds")
-```
-
-## Kernel PCA
-
-```{r}
-## COULDN'T RUN: Kept hitting stack overflow protection
-
-# ## Kernel PCA
-# library(kernlab)
-# 
-# # Perform Kernel PCA with RBF kernel
-# kpca_result = kpca(~., data = images[,-1], kernel = "rbfdot", features = 20)
-# 
-# # Convert KPCA to data frame
-# kpca_df = data.frame(kpca_result@rotated, type = stats$type1)
-# 
-# # Plot first 2 Kernel PCA components
-# ggplot(kpca_df, aes(PC1, PC2, color = type)) +
-#   geom_point(alpha = 0.7) +
-#   theme_minimal() +
-#   ggtitle("Kernel PCA Projection")
+#
 ```
 
