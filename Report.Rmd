@@ -7,7 +7,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
 ```
 
 ## Abstract
@@ -42,7 +42,33 @@ The Pokémon type system serves not only as a game mechanic but also as a concep
 
 Our analysis is based on two publicly available Kaggle datasets:
 
-## 1. Pokémon Stats Dataset
+## 1. Pokémon Image Dataset
+
+**URL:** [Pokemon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
+
+The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha), the colour and transparency assignments of each pixel.
+
+```{r echo = FALSE}
+## TO DO: Side by side pictures of 2 pokemon with their name + primary type
+# Libraries
+library(png)
+library(ggplot2)
+library(patchwork)
+
+# Pokemon
+ex1 = readPNG("Data/images/pikachu.png")
+ex2 = readPNG("Data/images/charizard.png")
+p1 = ggplot()+
+  annotation_raster(ex1,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
+  labs(title = "Pikachu (Primary Type: Electric)")
+p2 = ggplot()+
+  annotation_raster(ex2,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
+  labs(title = "Charizard (Primary Type: Fire)")
+print(p1 + p2)
+```
+**ADD ANNOTATIONS**
+
+## 2. Pokémon Stats Dataset
 
 **URL:** [The Complete Pokemon Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)
 
@@ -97,6 +123,7 @@ summary_table <- stats %>%
 # Print
 print(summary_table)
 ```
+**ADD ANNOTATIONS**
 
 ```{r echo=FALSE}
 type_cols <- c(
@@ -146,31 +173,7 @@ type_attack = ggplot(filtered_data, aes(x = type1, y = attack, fill = type1)) +
 # Print
 type_freq + type_attack
 ```
-
-## 2. Pokémon Image Dataset
-
-**URL:** [Pokemon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
-
-The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha), the colour and transparency assignments of each pixel.
-
-```{r echo = FALSE}
-## TO DO: Side by side pictures of 2 pokemon with their name + primary type
-# Libraries
-library(png)
-library(ggplot2)
-library(patchwork)
-
-# Pokemon
-ex1 = readPNG("Data/images/pikachu.png")
-ex2 = readPNG("Data/images/charizard.png")
-p1 = ggplot()+
-  annotation_raster(ex1,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
-  labs(title = "Pikachu")
-p2 = ggplot()+
-  annotation_raster(ex2,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
-  labs(title = "Charizard")
-print(p1 + p2)
-```
+**ADD ANNOTATIONS**
 
 ## Pre-processing
 
@@ -182,12 +185,30 @@ For the images, we begin by flattening each PNG into a (120x120x4) 57600-element
 
 ## Image Dimension Reduction
 
-- Image PCA
-
-### Pokemon Type Clustering Patterns
-
 - Image PCA results
 - t-SNE/UMAP on Pokemon Type
+
+To explore whether Pokémon types are distinguishable based on their visual features, we look to apply clustering algorithms to their images. Since we are working with high-dimensional data (801x57600), we first apply dimension reduction techniques to mitigate the curse of dimensionality. Our primary tools were Principal Component Analysis (PCA) and Uniform Manifold Approximation and Projection (UMAP). In their own right, these methods also help us determine if type-based structure is embedded in high-dimensional image representations.
+
+### Principal Component Analysis (PCA)
+
+We began with PCA, a linear technique that identifies the directions of maximal variance in the dataset. After centering the flattened image matrix, we applied PCA and examined the variance
+
+```{r echo=FALSE}
+## Scree plot + Biplot
+load("DimensionReduction/pca_scree.rds")
+# load("DimensionReduction/pca_biplot.rds")
+
+# print(pca_scree + pca_biplot)
+
+# REPLACE WITH COMBINED IMAGE USING ggsave()
+```
+
+```{r echo=FALSE}
+## Image compression
+load("DimensionReduction/img_compress.rds")
+print(sbs)
+```
 
 ## Unsupervised Model
 
