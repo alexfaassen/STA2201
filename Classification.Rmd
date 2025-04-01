@@ -1,0 +1,208 @@
+---
+title: "Pokemon"
+author: "JZ"
+date: "2025-03-29"
+output: pdf_document
+---
+
+```{r}
+library(MASS)
+library(gbm)
+```
+
+```{r}
+setwd('/Users/JZ/Downloads/STA2201-main')
+load("./Data/pokemon.RData")
+load("./Data/dr_pokemon2.RData")
+stats2 = read.csv('pokedex.csv')
+#stats = read.csv('.Data/pokemon_stats.csv')
+```
+
+```{r}
+do_LDA = function(data, train, attributes, to_plot){
+  x_train = as.matrix(data[train,attributes])
+  y_train = data[train,'type1']
+  x_test = as.matrix(data[-train,attributes])
+  y_test = data[-train,'type1']
+
+  LDA = lda(x_train, grouping = y_train)
+  #LDA$prior
+  #LDA$scaling
+  #t(LDA$means)
+  
+  pred = predict(LDA)
+  PX = pred$x
+  df = data.frame(PX, types = pred$class)
+  predm = predict(LDA, LDA$means)
+  PM = predm$x
+  dfm = data.frame(PM, types = predm$class)
+  plt = ggplot(mapping = aes(LD1, LD2, color = types))+
+    geom_point(data = df)+
+    geom_point(data = dfm, color = "black", shape = 4, size = 3)
+
+  df2 = data.frame(PX, types = c(pred$class, y_train), type = c(rep("predicted", length(train)), rep("true", length(train))), row.names = NULL)
+  plt2 = ggplot(df2, aes(LD1, LD2, color = types))+
+    geom_point()+
+    facet_wrap(~type)
+  
+  if(to_plot == T){
+    print(plt)
+    print(plt2)
+    
+  }
+  #print(mean(y_train == pred$class))
+  
+  #print(table(y_train, pred$class))
+
+  pred_test = predict(LDA, x_test)
+  PXtest = pred_test$x
+  accstest = c()
+  accs = c()
+  for(L in 1:dim(PX)[2]){
+    LDAreg_train = lda(PX[,1:L,drop = F], grouping = y_train)
+    labelsreg_train = predict(LDAreg_train)$class
+    #labelsreg = classify(PX[,1:L,drop = F], PM[,1:L, drop = F], pi)
+    accs = c(accs, mean(y_train == labelsreg_train))
+  
+    LDAreg = lda(PX[,1:L,drop = F], grouping = y_train)
+    labelsreg = predict(LDAreg, PXtest[,1:L,drop = F])$class
+    #labelsreg = classify(PXtest[,1:L,drop = F], PM[,1:L, drop = F], pi)
+    accstest = c(accstest, mean(y_test == labelsreg))
+  }
+  
+  return(list(data.frame(L = 1:dim(PX)[2], accuracy = accs), 
+              data.frame(L = 1:dim(PX)[2], accuracy_test = accstest)))
+  
+  }
+
+```
+
+```{r}
+names_comp = c(tolower(stats[,'name.simple']), tolower(stats[,'name']))
+stats$weight_kg = stats2[stats2[,'name'] %in% names_comp,]$weight
+stats$height_m = stats2[stats2[,'name'] %in% names_comp,]$height
+
+attributes = c('attack', 'defense', 'height_m', 'hp', 'sp_attack', 'sp_defense', 'speed', 'weight_kg')
+n = dim(stats)[1]
+
+train = sample(1:n, 0.8*n)
+do_LDA(stats, train, attributes, F)
+
+```
+
+```{r, warning = F}
+test_error = data.frame(row.names = seq(1, 8, by=1))
+train_error = data.frame(row.names = seq(1, 8, by=1))
+for(i in unique(stats$generation)){
+  gen_i = stats[stats$generation == i,]
+  n_i = dim(gen_i)[1]
+  gen_i$ind = seq(1, n_i, by=1)
+  train_i = c()
+  for(t in unique(stats$type1)){
+    gen_i_t = gen_i[gen_i$type1 == t,]
+    train_i = c(train_i, sample(gen_i_t$ind, 0.8*dim(gen_i_t)[1]))
+  }
+  #train_i = sample(1:n_i, 0.8*n_i)
+  train_error[,i] =  do_LDA(gen_i, train_i, attributes, F)[[1]][,'accuracy']
+  test_error[,i] =  do_LDA(gen_i, train_i, attributes, F)[[2]][,'accuracy_test']
+}
+train_error
+test_error
+```
+
+
+```{r}
+do_GB = function(data, train, attributes, to_plot){
+  train_data = data[train,attributes]
+  test_data = data[-train,attributes]
+  rownames(test_data) = NULL
+
+  gbm_model = gbm(
+    formula = type1 ~ ., 
+    data = train_data, 
+    distribution = "multinomial", 
+    interaction.depth = 4, 
+    shrinkage = 0.01, 
+    cv.folds = 1
+  )
+  pred_gbm_train = predict(gbm_model, newdata = train_data, n.trees = gbm_model$n.trees, type = 'response')
+  pred_gbm = predict(gbm_model, newdata = test_data, n.trees = gbm_model$n.trees, type = 'response')
+  #print(colnames(pred_gbm))
+  
+  correct_train = 0
+  for(i in 1:dim(pred_gbm_train)[1]){
+    pred_val = as.numeric(which.max(pred_gbm_train[i,,1]))
+    if(colnames(pred_gbm_train)[pred_val] == paste(train_data[i,'type1'])){
+      correct_train = correct_train + 1
+    }
+  }
+  train_accuracy = correct_train/dim(pred_gbm_train)[1]
+  
+  correct_test = 0
+  for(i in 1:dim(pred_gbm)[1]){
+    pred_val = as.numeric(which.max(pred_gbm[i,,1]))
+    if(colnames(pred_gbm)[pred_val] == paste(test_data[i,'type1'])){
+      correct_test = correct_test + 1
+    }
+  }
+  test_accuracy = correct_test/dim(pred_gbm)[1]
+  
+  return(list(train_accuracy, test_accuracy))
+}
+```
+
+```{r}
+train_gb = sample(1:n, 0.8*n)
+do_GB(stats, train_gb, c(attributes, 'type1'), T)
+```
+
+```{r, warning = F}
+accuracy_df = data.frame(row.names = c('train', 'test'))
+for(i in unique(stats$generation)){
+  gen_i = stats[stats$generation == i,]
+  n_i = dim(gen_i)[1]
+  gen_i$ind = seq(1, n_i, by=1)
+  train_i = c()
+  for(t in unique(stats$type1)){
+    gen_i_t = gen_i[gen_i$type1 == t,]
+    train_i = c(train_i, sample(gen_i_t$ind, 0.8*dim(gen_i_t)[1]))
+  }
+  #train_i = sample(1:n_i, 0.8*n_i)
+  gb = do_GB(gen_i, train_i, c(attributes, 'type1'), F)
+  accuracy_df[,i] =  c(gb[[1]], gb[[2]])
+}
+accuracy_df
+```
+
+
+
+
+
+```{r}
+  # pi = LDA$prior
+  # AX = x_train %*% LDA$scaling
+  # AM = LDA$means %*% LDA$scaling
+  # classify = function(X, M, pi){
+  #   D = as.matrix(dist(rbind(M, X)))[nrow(M) + (1:nrow(X)), 1:nrow(M)]
+  #   C = scale(1/2 * D^2, center = log(pi), scale = F)
+  #   colnames(D)[apply(C, 1, which.min)]
+  # }
+  # 
+  # labels = classify(AX, AM, pi)
+  # 
+  # # df = data.frame(AX, types = labels)
+  # dfm = data.frame(AM)
+  # plt = ggplot(mapping = aes(!!str2lang('LD1'), LD2, color = types))+
+  #   geom_point(data = df)+
+  #   geom_point(data = dfm, color = "black", shape = 4, size = 3)
+  # print(plt)
+  
+
+```
+
+
+
+
+
+
+
