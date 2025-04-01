@@ -80,7 +80,25 @@ mean(stats$image_path == images$image_path)
 ## EDA Visuals
 
 ```{r}
-#
+## Side by side pokemon
+# Libraries
+library(png)
+library(ggplot2)
+library(patchwork)
+
+# Pokemon
+ex1 = readPNG("Data/images/pikachu.png")
+ex2 = readPNG("Data/images/charizard.png")
+p1 = ggplot()+
+  annotation_raster(ex1,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
+  labs(title = "Pikachu (Primary Type: Electric)")
+p2 = ggplot()+
+  annotation_raster(ex2,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
+  labs(title = "Charizard (Primary Type: Fire)")
+p1 + p2
+
+# Save
+save(p1, p2, file = "Figures/eg_pokemon.RData")
 ```
 
 # Image Dimension Reduction

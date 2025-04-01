@@ -10,6 +10,11 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
 ```
 
+```{r include = FALSE, echo = FALSE}
+## Libraries
+library(patchwork)
+```
+
 ## Abstract
 
 - Report Summary
@@ -49,22 +54,9 @@ Our analysis is based on two publicly available Kaggle datasets:
 The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha), the colour and transparency assignments of each pixel.
 
 ```{r echo = FALSE}
-## TO DO: Side by side pictures of 2 pokemon with their name + primary type
-# Libraries
-library(png)
-library(ggplot2)
-library(patchwork)
-
-# Pokemon
-ex1 = readPNG("Data/images/pikachu.png")
-ex2 = readPNG("Data/images/charizard.png")
-p1 = ggplot()+
-  annotation_raster(ex1,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
-  labs(title = "Pikachu (Primary Type: Electric)")
-p2 = ggplot()+
-  annotation_raster(ex2,xmin=-Inf,xmax=+Inf,ymin=-Inf,ymax= +Inf) +
-  labs(title = "Charizard (Primary Type: Fire)")
-print(p1 + p2)
+## Side by side pictures of 2 pokemon with their name + primary type
+load("Figures/eg_pokemon.RData")
+p1 + p2 # Uses library(patchwork) - loaded at top.
 ```
 **ADD ANNOTATIONS**
 
