@@ -75,6 +75,8 @@ mean(stats$image_path == images$image_path)
 
 ## Save Datasets
 # save(stats, images, file = "pokemon.RData")
+
+setwd("..")
 ```
 
 ## EDA Visuals
