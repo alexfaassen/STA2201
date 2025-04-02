@@ -73,7 +73,7 @@ This structured dataset contains 41 variables for 801 Pokémon. These features i
 - **Categorical indicators:** Legendary status, abilities, and generation
 - **Primary and secondary type labels**
 
-All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values. **Notably**, We only consider primary type labels for this project to maintain a single-label classification structure.
+All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values. **Notably**, we only consider primary type labels for this project to maintain a single-label classification structure.
 
 ```{r echo=FALSE}
 ## TO DO: Visuals
@@ -106,11 +106,11 @@ For the images, we begin by flattening each PNG into a (120x120x4) 57600-element
 - Image PCA results
 - t-SNE/UMAP on Pokemon Type
 
-To explore whether Pokémon types are distinguishable based on their visual features, we look to apply clustering algorithms to their images. Since we are working with high-dimensional data (801x57600), we first apply dimension reduction techniques to mitigate the curse of dimensionality. Our primary tools were Principal Component Analysis (PCA) and Uniform Manifold Approximation and Projection (UMAP). In their own right, these methods also help us determine if type-based structure is embedded in high-dimensional image representations.
+To explore whether Pokémon types are distinguishable based on their visual features, we look to apply clustering algorithms to their images. Since we are working with high-dimensional data (801x57600), we first apply dimension reduction techniques to mitigate the curse of dimensionality intending to apply clustering algorithms to the compressed images. Our primary tools were Principal Component Analysis (PCA) and Uniform Manifold Approximation and Projection (UMAP). In their own right, these methods also help us determine if type-based structure is embedded in high-dimensional image representations.
 
 ### Principal Component Analysis (PCA)
 
-We began with PCA, a linear technique that identifies the directions of maximal variance in the dataset. After centering the flattened image matrix, we applied PCA and examined the variance
+We began with PCA, a linear technique that identifies the directions of maximal variance in the dataset. After centering the flattened image matrix, we applied PCA and examined the cumulative variance explained by the resulting principal components.
 
 ```{r echo=FALSE}
 ## Scree plot + Biplot
@@ -118,10 +118,21 @@ load("Figures/img_dim_red.RData")
 cumVE_biplot_img
 ```
 
+- Biplot breakdown
+- Loading vectors (add figures in appendix)
+- Cumulative VE plot
+
 ```{r echo=FALSE}
 ## Image compression
 abomasnow_og + abomasnow_compressed
 ```
+
+- Image compression
+
+### UMAP
+
+- Plot?
+- Breakdown
 
 ## Unsupervised Model
 
