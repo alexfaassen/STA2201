@@ -490,7 +490,7 @@ scatterplot = function(X, M, cluster, label = FALSE){
       theme(legend.position = "right")
   }
 }
-#Reference lecture 7 slide 10, and modifications from hw 3
+# Reference lecture 7 slide 10, and modifications from hw 3
 weighted_kmeans <- function(X, K) {
   X <- as.matrix(X)  
   n <- nrow(X)  
@@ -580,8 +580,6 @@ scatterplot(pca_stats_df, kmeans_stats$centers, kmeans_stats$cluster)
 ```{r}
 ## Comparing standard kmeans with kmeans++ and weighted kmeans
 
-#Kmeans++
-
 #Ref: lecture 7
 # Randomly select the first centroid
 n <- nrow(pca_stats_df) 
@@ -604,12 +602,10 @@ scatterplot(pca_stats_df, kmeans_stats_pp$centers, kmeans_stats_pp$cluster)
 
 ```
 
-```{r}
-#Lower withinss is better
+```{r, include = FALSE}
 #kmeans_stats$tot.withinss
 #kmeans_stats_pp$tot.withinss
 
-#Higher betweenss is better
 #kmeans_stats$betweenss
 #kmeans_stats_pp$betweenss
 
@@ -670,25 +666,26 @@ ggplot(df, aes(K, CH)) +
 gapstat_stats = clusGap(pca_stats_df, FUN = kmeans, nstart = 50, K.max = 10, B = 50)
 fviz_gap_stat(gapstat_stats, maxSE = list(method = "Tibs2001SEmax", SE.factor = 1)) 
 
+# RESULTS
+
 # Elbow method: Optimal K = 3
-# 
+ 
 # Silhouette method: Optimal K = 2
-# 
+ 
 # CH Index: Optimal K = 1
-# 
+ 
 # Gap stats: Optimal K = 10
-# 
+ 
 ```
 
 ```{r}
 # Kmeans on optimal K = 3
-
 kmeans_stats_optimal <- kmeans(pca_stats_df, centers = 3)
 scatterplot(pca_stats_df, kmeans_stats_optimal$centers, kmeans_stats_optimal$cluster)
 ```
 
 ```{r}
-## Comparing with true labels
+# Comparing with true labels
 
 comp_labels <- data.frame(type1 = stats$type1)
 comp_labels$cluster <- as.factor(kmeans_stats$cluster)
@@ -773,7 +770,6 @@ labelled_clusters <- comp_labels %>%
 
 ```{r}
 ## Kmeans on images k = 18
-
 pca_imgs_df<- dr_images[,-1]  # Remove image_path column
 k_types <- length(unique(stats$type1))
 kmeans_imgs <- kmeans(pca_imgs_df, centers = k_types)
@@ -782,7 +778,6 @@ kmeans_imgs <- kmeans(pca_imgs_df, centers = k_types)
 ```{r}
 ## Comparing standard kmeans with kmeans++ and weighted kmeans
 
-#Kmeans++
 #Ref: lecture 7
 # Randomly select the first centroid
 n <- nrow(pca_imgs_df) 
@@ -804,12 +799,10 @@ for (i in 2:k_types) {
 kmeans_imgs_pp <- kmeans(pca_imgs_df, centers = M, algorithm = "Lloyd")
 ```
 
-```{r}
-#Lower withinss is better
+```{r, include = FALSE}
 #kmeans_imgs$tot.withinss
 #kmeans_imgs_pp$tot.withinss
 
-#Higher betweenss is better
 #kmeans_imgs$betweenss
 #kmeans_imgs_pp$betweenss
 
@@ -872,18 +865,19 @@ ggplot(df, aes(K, CH)) +
 gapstat_img = clusGap(pca_imgs_df, FUN = kmeans, nstart = 50, K.max = 10, B = 50)
 fviz_gap_stat(gapstat_img, maxSE = list(method = "Tibs2001SEmax", SE.factor = 1)) 
 
+# RESULTS
+
 # Elbow method: Optimal K = 3
-# 
+
 # Silhouette method: Optimal K = 2
-# 
+
 # CH Index: Optimal K = 1
-# 
+
 # Gap statistics: Optimal K = 10
 ```
 
 ```{r}
 #Kmeans on optimal K = 3
-
 kmeans_imgs_optimal <- kmeans(pca_imgs_df, centers = 3, nstart = 25)
 scatterplot(pca_imgs_df, kmeans_imgs_optimal$centers, kmeans_imgs_optimal$cluster)
 ```
