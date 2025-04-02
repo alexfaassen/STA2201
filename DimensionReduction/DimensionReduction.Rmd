@@ -198,7 +198,7 @@ pca_scree = barplot(ve)+
 pca_scree
 
 ## Save object
-save(pca_scree, file = "pca_scree.rds")
+# save(pca_scree, file = "pca_scree.rds")
 ```
 
 ## Visualize Compressed Images

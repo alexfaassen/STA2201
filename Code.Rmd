@@ -76,16 +76,19 @@ mean(stats$image_path == images$image_path)
 ## Save Datasets
 # save(stats, images, file = "pokemon.RData")
 
+## Reset
+global_vars = c("global_vars", "images", "stats")
+rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars
 setwd("..")
 ```
 
 ## EDA Visuals
 
 ```{r}
-# Libraries
 library(png)
 library(ggplot2)
 library(patchwork)
+library(forcats)
 
 ## Example Pokemon
 ex1 = readPNG("Data/images/pikachu.png")
@@ -167,6 +170,9 @@ summary_table <- stats %>%
 
 # Save
 save(p1, p2, type_freq, type_attack, summary_table, file = "Figures/data_description.RData")
+
+## Reset
+rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars
 ```
 
 # Image Dimension Reduction
@@ -204,12 +210,17 @@ plotImg <- function(img_raster) {
 ```{r}
 ## PCA
 # Defaults: center = TRUE, scale. = FALSE
-PCA = prcomp(images[,-1], center = TRUE, scale. = FALSE) #scale = TRUE)
+PCA = prcomp(images[,-1], center = TRUE, scale. = FALSE)
 
 sum_PCA = summary(PCA)
+# sum_PCA
+
+# Note: Too big to save to GitHub.
 ```
 
 ```{r}
+library(ggfortify)
+
 ## Biplot
 # Colours
 stats$type1 = factor(stats$type1)
@@ -219,15 +230,17 @@ type_colours = c("#7AC74C", "#EE8130", "#6390F0", "#A6B91A", "#A8A77A", "#A33EA1
             "#96D9D6", "#6F35FC", "#705746", "#B7B7CE", "#A98FF3")
 names(type_colours) = unique(stats$type1)
 
-# library(ggfortify)
-autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), shape = FALSE, color = "stats$type1", label = TRUE, label.label = "stats$name", scale = 0) +
-  scale_colour_manual(values = type_colours) +
-  theme(legend.position = "none")
+# autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), shape = FALSE, color = "stats$type1", label = TRUE, label.label = "stats$name", scale = 0) +
+#   scale_colour_manual(values = type_colours) +
+#   theme(legend.position = "none")
 
 # Without labels, just types.
-autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), label = FALSE, shape = 16, color = "stats$type1", scale = 0) +
+pca_biplot = autoplot(PCA, data = cbind(stats$name, stats$type1, images[,-1]), label = FALSE, shape = 16, color = "stats$type1", scale = 0) +
   scale_colour_manual(values = type_colours) +
   theme(legend.position = "none")
+pca_biplot
+
+# Note: Too big to save to GitHub.
 ```
 
 ## Loading Vectors
@@ -269,6 +282,9 @@ pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
 # pca_norm = (pca - mean(pca))/(2 * sd(pca))
 # pca_clip = pmax(pmin(pca, 1), 0)
 plotImg(getImg(pca_norm))
+
+## Notes:
+# - Likely corresponds to Pokemon image Area.
 ```
 
 ```{r}
@@ -290,13 +306,17 @@ print(final_plot)
 pca = PCA$rotation[,2]
 pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
 plotImg(getImg(pca_norm))
+
+## Notes:
+# - Likely corresponds to a Pokemon's relative width/height ratio.
+# - Notably, neither PC1 nor PC2 correspond to colour, yet.
 ```
 
 ## Variance Explained
 
 ```{r}
 ## Variance Explained
-ve = summary(PCA)$importance[3,]
+ve = sum_PCA$importance[3,]
 
 ## Retain PCs
 var_retain = 0.8 # % of VE
@@ -307,14 +327,15 @@ dr_images = data.frame(
 )
 
 # Plot
-barplot(ve)+
-  xlab("principal component")+
-  ylab("cumulative variance explained")+
+pca_cumVE = barplot(ve)+
+  xlab("Principal Component")+
+  ylab("Cumulative VE")+
   ylim(0, 1)+
   geom_hline(aes(yintercept = 0.9), linewidth = 1, linetype = "dashed") +
   geom_hline(aes(yintercept = 0.95), linewidth = 1, linetype = "dashed", color = "red") +
-  geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue") +  # Highlight selected PC count
+  geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue", size = 1) +  # Highlight selected PC count
   annotate("text", x = num_pcs + 5, y = 0.5, label = paste0(num_pcs, " PCs retained"), color = "blue")
+pca_cumVE
 ```
 
 ## Visualize Compressed Images
@@ -323,32 +344,90 @@ barplot(ve)+
 ## Abomasnow
 pokemon = which(stats$name == "Abomasnow")
 # Original image
-og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original")
+abomasnow_og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original: Abomasnow")
 # Compressed image
 scores = (as.numeric(images[pokemon, -1]) - PCA$center) %*% PCA$rotation
 scores_95VE = scores[, 1:num_pcs, drop = FALSE] %*% t(PCA$rotation[, 1:num_pcs]) + PCA$center
 # scores_95VE_norm = (scores_95VE - min(scores_95VE)) / (max(scores_95VE) - min(scores_95VE))
 scores_95VE_clip = pmax(pmin(scores_95VE, 1), 0)
-compressed = plotImg(getImg(scores_95VE_clip)) +
+abomasnow_compressed = plotImg(getImg(scores_95VE_clip)) +
   labs(title = paste("PCA Reconstructed (", num_pcs, " PCs)", sep=""))
 # Side by side
-sbs = og + compressed
-print(sbs)
+abomasnow_og + abomasnow_compressed
+
 
 ## Gardevoir
 pokemon = which(stats$name == "Gardevoir")
 # Original image
-og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original")
+gardevoir_og = plotImg(getImg(images[pokemon, -1])) + labs(title = "Original: Gardevoir")
 # Compressed image
 scores = (as.numeric(images[pokemon, -1]) - PCA$center) %*% PCA$rotation
 scores_95VE = scores[, 1:num_pcs, drop = FALSE] %*% t(PCA$rotation[, 1:num_pcs]) + PCA$center
 # scores_95VE_norm = (scores_95VE - min(scores_95VE)) / (max(scores_95VE) - min(scores_95VE))
 scores_95VE_clip = pmax(pmin(scores_95VE, 1), 0)
-compressed = plotImg(getImg(scores_95VE_clip)) +
+gardevoir_compressed = plotImg(getImg(scores_95VE_clip)) +
   labs(title = paste("PCA Reconstructed (", num_pcs, " PCs)", sep=""))
 # Side by side
-sbs = og + compressed
-print(sbs)
+gardevoir_og + gardevoir_compressed
+```
+
+## Save Report Images
+
+```{r}
+## Cumulative VE + Biplot
+mod_cumVE = pca_cumVE + theme(legend.position = "none") + labs(title = "Cumulative Variance Explained")
+mod_biplot = pca_biplot + labs(title = "Biplot (PC1 vs. PC2)") + theme_minimal() + theme(legend.position = "none")
+cumVE_biplot = mod_cumVE + mod_biplot
+cumVE_biplot
+ggsave("Figures/scree_biplot.png", plot = cumVE_biplot, width = 7, height = 4, units = "in")
+
+## Test
+library(png)
+library(grid)
+img = readPNG("Figures/scree_biplot.png")
+g = rasterGrob(img, interpolate = TRUE)
+
+cumVE_biplot_img = ggplot() +
+  annotation_custom(g, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
+  theme_void()
+
+## Save
+save(cumVE_biplot_img, abomasnow_og, abomasnow_compressed, file = "Figures/img_dim_red.RData")
+
+## Reset
+global_vars = c(global_vars, "dr_images", "type_colours")
+rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars
+```
+
+## UMAP
+
+```{r}
+## UMAP
+# library(umap)
+# 
+# UMAP_imgs = umap(images[,-1])
+
+## Load object
+load("DimensionReduction/umap_pokemon.rds")
+
+# Plot
+type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
+
+umap_df = data.frame(x = UMAP_imgs$layout[,1], y = UMAP_imgs$layout[,2], type = stats$type1)
+ggplot(umap_df, aes(x, y, color = type)) +
+  geom_point(alpha = 0.7) +
+  theme_minimal() +
+  scale_colour_manual(values = type_colours) +
+  ggtitle("UMAP Projection")
+
+## Save object
+# save(UMAP_imgs, file = "umap_pokemon.rds")
+
+# Note: Too large to save on GitHub.
+
+## Reset
+global_vars = c(global_vars, "UMAP_imgs")
+rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars
 ```
 
 # Clustering

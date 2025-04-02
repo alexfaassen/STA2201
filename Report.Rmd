@@ -12,7 +12,9 @@ knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
 
 ```{r include = FALSE, echo = FALSE}
 ## Libraries
+library(ggplot2)
 library(patchwork)
+library(forcats)
 ```
 
 ## Abstract
@@ -79,8 +81,9 @@ All variables are numeric or have been encoded numerically (e.g., legendary stat
 # - Histogram of pokemon by primary type
 # - Boxplots comparing attack/sp_attack across types
 
-# Print
-summary_table
+## Summary_stats
+# summary_table
+knitr::kable(summary_table, caption = "Summary Statistics for Key Features")
 ```
 **ADD ANNOTATIONS**
 
@@ -111,18 +114,13 @@ We began with PCA, a linear technique that identifies the directions of maximal 
 
 ```{r echo=FALSE}
 ## Scree plot + Biplot
-load("DimensionReduction/pca_scree.rds")
-# load("DimensionReduction/pca_biplot.rds")
-
-# print(pca_scree + pca_biplot)
-
-# REPLACE WITH COMBINED IMAGE USING ggsave()
+load("Figures/img_dim_red.RData")
+cumVE_biplot_img
 ```
 
 ```{r echo=FALSE}
 ## Image compression
-load("DimensionReduction/img_compress.rds")
-print(sbs)
+abomasnow_og + abomasnow_compressed
 ```
 
 ## Unsupervised Model
