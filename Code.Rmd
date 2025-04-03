@@ -489,6 +489,8 @@ global_vars = c(global_vars, "UMAP_imgs")
 rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars
 ```
 
+
+
 # Clustering
 
 ## Setup
@@ -1121,6 +1123,8 @@ km_cluster_summary_stats_comp$mode_type <- cluster_label_mapping$mode_type
 kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standard K-means (Stats Data)")
 
 ```
+
+
 
 # Classification
 
