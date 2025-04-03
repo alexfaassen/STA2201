@@ -53,7 +53,7 @@ The Pokémon type system serves not only as a game mechanic but also as a concep
 
 Our analysis is based on two publicly available Kaggle datasets:
 
-## 1. Pokémon Image Dataset
+## Pokémon Image Dataset
 
 **URL:** [Pokémon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
 
@@ -65,7 +65,7 @@ load("Figures/data_description.RData")
 p1 + p2 # Uses library(patchwork) - loaded at top.
 ```
 
-## 2. Pokémon Stats Dataset
+## Pokémon Stats Dataset
 
 **URL:** [The Complete Pokémon Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)
 
