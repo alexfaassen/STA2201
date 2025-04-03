@@ -76,7 +76,7 @@ This structured dataset contains 41 variables for 801 Pokémon. These features i
 - **Categorical indicators:** Legendary status, abilities, and generation
 - **Primary and secondary type labels**
 
-All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values.
+All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). 
 
 ```{r echo=FALSE}
 ## Summary_stats
