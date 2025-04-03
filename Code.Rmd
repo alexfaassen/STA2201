@@ -1029,8 +1029,39 @@ labelled_clusters <- comp_labels %>%
 # mean(labelled_clusters$type1 == labelled_clusters$mode_type) 
 ```
 
+```{r}
+# Summary of stats for standard kmeans clusters
+stats_with_cluster <- stats %>%
+  mutate(km_cluster = kmeans_stats$cluster)
 
+km_cluster_summary_stats <- stats %>%
+  mutate(km_cluster = kmeans_stats$cluster) %>%
+  group_by(km_cluster) %>%
+  summarise(
+    attack_mean = mean(attack),
+    hp_mean = mean(hp),
+    defense_mean = mean(defense),
+    speed_mean = mean(speed),
+    .groups = 'drop'
+  )
+```
 
+```{r}
+# Summarize kmeans cluster assignments
+comp_labels$cluster <- as.factor(kmeans_stats$cluster)
+cluster_label_mapping <- comp_labels %>%
+  mutate(cluster = factor(kmeans_stats$cluster)) %>%
+  group_by(cluster) %>%
+  summarise(mode_type = Mode(type1), .groups = 'drop') 
+labelled_clusters <- comp_labels %>%
+  left_join(cluster_label_mapping, by = "cluster") %>%
+  select(type1, cluster, mode_type)
+km_cluster_summary_stats_comp <- km_cluster_summary_stats
+km_cluster_summary_stats_comp$mode_type <- cluster_label_mapping$mode_type
+
+kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standard K-means (Stats Data)")
+
+```
 
 # Classification
 
