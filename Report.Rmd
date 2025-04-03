@@ -3,7 +3,8 @@ title: "Predicting Pokémon Types Using Clustering and Classification"
 subtitle: "University of Toronto - STA2201 - Winter 2025"
 author: "Justin Zhang, Isaac Baguisa, Alex Faassen"
 date: "2025-04-04"
-output: pdf_document
+output:
+  pdf_document
 ---
 
 ```{r setup, include=FALSE}
