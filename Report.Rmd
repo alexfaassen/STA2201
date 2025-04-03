@@ -153,6 +153,8 @@ To uncover non-linear structure in the image data, we applied **Uniform Manifold
 
 Once again, with the large numper of types, it is very hard to visually identify groupings. Upon close inspection, there does seem to be slightly more grouping between certain types, such as `dark`, `fairy`, and `poison`. However, for the most part, most types appear to be largely overlapping. Though types aren't particularly distinct, there does seem to be some improvement over the PCA biplot. Overall, UMAP provides stronger visual evidence that type-specific patterns may exist in the high-dimensional image data.
 
+
+
 ## Unsupervised Model
 
 ```{r, echo=FALSE}
@@ -211,6 +213,7 @@ Standard K-means and K-means++ gave similar performances across numeric and imag
 Looking deeper into the clustering results from standard K-means with k=18, we see how the K-means algorithm groups Pokemon based on their stats, independent of their actual types. This gives us an idea of whether Pokemon types with similar stats (high attack and speed, or high defense and hp) tend to cluster together. In general, it is common to see Pokemon with relatively similar attack, speed, or defensive stats cluster together, but this does not necessarily correspond to the type the Pokemon belongs to (See Table 4 in Appendix). In Table 5 in the appendix, some clusters were clearly dominated by a single type - such as water for cluster 11. There were some common clusters containing a mix of different types that could be linked through common attributes. For example, cluster 17 had ghost and psychic types dominate in this cluster - suggesting these types share common statistical features. Similarly, cluster 10 grouped many bug, grass, and poison types. Overall this suggests that statistical features like attack, defense, etc., might outweigh type-specific features when forming clusters.
 
 
+
 ## Supervised Model
 
 - e.g. Log reg, KNN, LDA
@@ -244,20 +247,8 @@ Overall, clustering performance varied significantly depending on the data type 
 
 - Use `knitcitations`? - manual easier?
 
-<<<<<<< HEAD
 \newpage 
 
-# Appendix
-
-
-```{r, echo=FALSE}
-kable(km_cluster_summary_stats, caption="Average Statistics Rating Across Standard K-means Clusters (Stats Data)")
-```
-
-```{r, echo=FALSE}
-kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standard K-means (Stats Data)")
-
-=======
 # Appendix
 
 ## A: Loading Vectors
@@ -290,6 +281,15 @@ pca_v2
 ```{r fig.cap = "Images of the Pokémon Gardevoir. Left: Original. Right: After image compression with 175 PCs, capturing 80% of the variance explained.", echo=FALSE}
 load("Figures/appendix_B.RData")
 gardevoir_og + gardevoir_compressed
->>>>>>> report
+```
+
+## C: Clustering
+
+```{r, echo=FALSE}
+kable(km_cluster_summary_stats, caption="Average Statistics Rating Across Standard K-means Clusters (Stats Data)")
+```
+
+```{r, echo=FALSE}
+kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standard K-means (Stats Data)")
 ```
 
