@@ -1,13 +1,24 @@
 ---
-title: "Predicting Pokémon Types Using Clustering and Classification"
+title: "Predicting Pokémon Types with Clustering and Classification"
 subtitle: "University of Toronto - STA2201 - Winter 2025"
 author: "Justin Zhang, Isaac Baguisa, Alex Faassen"
 date: "2025-04-04"
-output: pdf_document
+output:
+  pdf_document:
+    fig_caption: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
+# knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
+knitr::opts_chunk$set(
+  fig.width = 6.5, #6,
+  fig.height = 3.5,#4,
+  fig.align = "center",
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
 ```
 
 ```{r include = FALSE, echo = FALSE}
@@ -23,17 +34,13 @@ library(knitr)
 - Report Summary
 - Link GitHub?
 
-## Contributions:
+## Contributions
 
 - Justin Zhang:
 - Isaac Baguisa:
-- Alex Faassen:
+- Alex Faassen: Data pre-processing, Data exploration, Image dimension reduction
 
 # Introduction
-
-- Research Question
-- Motivation
-- Context
 
 Over the past two decades, Pokémon has evolved from a niche Gameboy game into a global multimedia franchise encompassing anime, trading cards, e-sports competitions, and mobile applications. For many who grew up in the late 2000s and early 2010s, the world of Pokémon was a formative part of childhood entertainment alongside cultural staples like Mario Bros. and Zelda. As Pokémon continues to captivate audiences across generations, its community-oriented game design and well-structured universe presents an intriguing opportunity for data analysis. In this project, we investigate whether a Pokémon's type—a categorical label used in-game to denote elemental or behavioral characteristics such as Fire, Water, or Grass—can be inferred from its visual appearance and numerical attributes using statistical learning techniques.
 
@@ -44,28 +51,23 @@ The Pokémon type system serves not only as a game mechanic but also as a concep
 
 # Data Description
 
-- Data description + overview
-- Pre-processing
-- Visualizations and summary stats: Stats head; Example image; Mean image
-
 Our analysis is based on two publicly available Kaggle datasets:
 
 ## 1. Pokémon Image Dataset
 
-**URL:** [Pokemon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
+**URL:** [Pokémon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
 
 The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha), the colour and transparency assignments of each pixel.
 
-```{r echo = FALSE}
+```{r fig:ex_images, fig.cap = "Images of Pikachu (Primary type: Electric) and Charizard (Primary Type: Charizard) from the Pokémon Image Dataset.", echo=FALSE}
 ## Side by side pictures of 2 pokemon with their name + primary type
 load("Figures/data_description.RData")
 p1 + p2 # Uses library(patchwork) - loaded at top.
 ```
-**ADD ANNOTATIONS**
 
 ## 2. Pokémon Stats Dataset
 
-**URL:** [The Complete Pokemon Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)
+**URL:** [The Complete Pokémon Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)
 
 This structured dataset contains 41 variables for 801 Pokémon. These features include:
 
@@ -74,25 +76,35 @@ This structured dataset contains 41 variables for 801 Pokémon. These features i
 - **Categorical indicators:** Legendary status, abilities, and generation
 - **Primary and secondary type labels**
 
-All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). **Notably**, we only consider primary type labels for this project to maintain a single-label classification structure.
+All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values. For this project, we **only consider primary type** labels to maintain a single-label classification structure.
 
 ```{r echo=FALSE}
-## TO DO: Visuals
-# - Table of summary stats for key features
-# - Histogram of pokemon by primary type
-# - Boxplots comparing attack/sp_attack across types
-
 ## Summary_stats
-# summary_table
 knitr::kable(summary_table, caption = "Summary Statistics for Key Features")
 ```
-**ADD ANNOTATIONS**
 
-```{r echo=FALSE}
-# Print
-type_freq + type_attack
+\textbf{Table 1} provides an overview of the distribution of key numeric features across Pokémon in the dataset. Several notable patterns emerge:
+
+Combat statistics, such as `attack`, `defense`, `sp_attack`, `sp_defense`, and `speed`, show similar ranges, with means around 66–78 and standard deviations near 30. These distributions suggest balanced but varied combat capabilities, with maximum values exceeding 180 or 230, likely representing fully evolved or legendary Pokémon. `hp` follows a similar pattern with a slightly lower mean of 69 and a maximum of 255, again suggesting outliers with extreme values. In contrast, the physical attributes, `height_m` and `weight_kg`, seem to be skewed. The average height is just over 1 meter, but with a maximum of 14.5 meters. Weight displays even greater disparity, ranging from under 1 kg to nearly 1000 kg. This indicates that a few extremely large Pokémon (e.g., Wailord) heavily influence these distributions.
+
+```{r fig.cap = "Frequency and attack statistic distributions of the top 5 Pokémon primary types by frequency.", echo=FALSE}
+## Attack stat distributions
+# - Make side by side with Sp. attack?
+# type_freq + type_attack
+type_attack + type_sp_attack
 ```
-**ADD ANNOTATIONS**
+
+In addition to summary statistics, \textbf{Figure 2} visualizes the distributions of the `attack` and `sp_attack` stats across the five most common primary types using boxplots. These five types, `water`, `normal`, `grass`, `bug`, and `psychic`, were selected based on their overall frequency in the dataset.
+
+The boxplots reveal several key insights:
+
+- `normal` Pokémon tend to have a slightly higher median attack, but slightly lower median special attack compared to the other types. The interquartile ranges are also both narrower, indicating a more concentrated spread of both stats within this type.
+- `bug` and `psychic` types show the lowest median attack values among the five. However, `psychic` seems to make up for this with a significantly higher special attack spread, while `bug` maintains the lowest special attack stats.
+- All types exhibit high-attack outliers above 150, indicating that even typically lower physically offense types can include powerful exceptions.
+- The two most common types, `water` and `normal`, show narrower distributions for both stats, consistent with their broad representation across Pokémon species.
+
+This visualization supports the idea that while some types, like `normal`, may lean toward stronger physical offense, others, like `psychic`, may rely on special attack, while some, like `bug`, may rely on `abilities` or other strategic capabilities not captured by standard combat stats alone. These findings underscore the importance of incorporating multiple features when attempting to predict a Pokémon’s type using clustering or classification models.
+
 
 ## Pre-processing
 
@@ -104,36 +116,42 @@ For the images, we begin by flattening each PNG into a (120x120x4) 57600-element
 
 ## Image Dimension Reduction
 
-- Image PCA results
-- t-SNE/UMAP on Pokemon Type
-
-To explore whether Pokémon types are distinguishable based on their visual features, we look to apply clustering algorithms to their images. Since we are working with high-dimensional data (801x57600), we first apply dimension reduction techniques to mitigate the curse of dimensionality intending to apply clustering algorithms to the compressed images. Our primary tools were Principal Component Analysis (PCA) and Uniform Manifold Approximation and Projection (UMAP). In their own right, these methods also help us determine if type-based structure is embedded in high-dimensional image representations.
+To explore whether Pokémon types are distinguishable based on their visual features, we look to apply clustering algorithms to their images. Since we are working with high-dimensional data (801x57600), we first apply dimension reduction techniques to mitigate the curse of dimensionality. Our primary tool for image dimension reduction is Principal Component Analysis (PCA). In its own right, this method also helps us determine if type-based structure is embedded in high-dimensional image representations.
 
 ### Principal Component Analysis (PCA)
 
-We began with PCA, a linear technique that identifies the directions of maximal variance in the dataset. After centering the flattened image matrix, we applied PCA and examined the cumulative variance explained by the resulting principal components.
+PCA is a linear technique that identifies the directions of maximal variance in the dataset. After centering the flattened image matrix, we applied PCA and examined the principal components, loading vectors, and compression options.
 
-```{r echo=FALSE}
+```{r fig.cap = "Left: Cumulative Variance Explained (VE) by principal components (PC). The blue and black dashed lines represent 80% and 95% of VE respectively. Right: Biplot for the first 2 PCs.", echo=FALSE}
 ## Scree plot + Biplot
+# - Switch sides (want to talk about biplot first - transition to image compression with cum VE)
 load("Figures/img_dim_red.RData")
 cumVE_biplot_img
 ```
 
-- Biplot breakdown
-- Loading vectors (add figures in appendix)
-- Cumulative VE plot
+\textbf{Figure 3} above summarizes the results of applying PCA to the flattened Pokémon image data.
 
-```{r echo=FALSE}
+On the left, the biplot visualizes the Pokémon with respect to the first 2 principal components (PCs), **PC1 (13.03%)** and **PC2 (5.25%)**. Each point corresponds to a Pokémon, colour-coded by its primary type. While its possible that there are weak groupings, all types seem to be heavily overlapping. This is somewhat unsurprising given the first 2 PCs only represent roughly 18% of the variance. Further, \textbf{Appendix A} examines the first 2 **loading vectors** which seem to correspond to Pokémon area (i.e. height-width stretch) and height-width ratio respectively, neither of which seem particularly promising on their own for type clustering. These findings motivate the use of non-linear methods, such as **UMAP** or **t-SNE**, which are better suited for uncovering type-based structure in complex image data.
+
+On the right, the **cumulative variance explained** plot shows that the first few PCs capture a substantial portion of the variance, but with diminishing returns beyond the first 100 components. To retain at least **80% of the total variance**, we selected the first **175 PCs** (indicated by the blue vertical line). This threshold strikes a balance between compression and information preservation with a slightly greater emphasis on compression, and these 175 components are used in downstream clustering and classification steps. Below, \textbf{Figure 4} and \textbf{Appendix B} provide visual examples of the degree of compression applied before applying clustering algorithms.
+
+```{r fig.cap = "Images of the Pokémon Abomasnow. Left: Original. Right: After image compression with 175 PCs, capturing 80% of the variance explained.", echo=FALSE}
 ## Image compression
 abomasnow_og + abomasnow_compressed
 ```
 
-- Image compression
-
 ### UMAP
 
-- Plot?
-- Breakdown
+```{r fig.cap = "2D UMAP projection of the 801 Pokémon image vectors. Left: Coloured by their primary type. Right: All type colours set to grey, save Dark, Fairy, and Poison types.", echo=FALSE}
+## UMAP
+# - Highlight better-clustered types
+load("Figures/umap_plt.RData")
+umap_plt + umap_plt_col
+```
+
+To uncover non-linear structure in the image data, we applied **Uniform Manifold Approximation and Projection (UMAP)**. Unlike PCA, which is a linear method, UMAP is designed to preserve both local and global relationships in high-dimensional spaces, making it particularly effective for image-based clustering. \textbf{Figure 5} displays the 2D UMAP projection of the 801 Pokémon image vectors, coloured by their primary type.
+
+Once again, with the large numper of types, it is very hard to visually identify groupings. Upon close inspection, there does seem to be slightly more grouping between certain types, such as `dark`, `fairy`, and `poison`. However, for the most part, most types appear to be largely overlapping. Though types aren't particularly distinct, there does seem to be some improvement over the PCA biplot. Overall, UMAP provides stronger visual evidence that type-specific patterns may exist in the high-dimensional image data.
 
 ## Unsupervised Model
 
@@ -226,6 +244,7 @@ Overall, clustering performance varied significantly depending on the data type 
 
 - Use `knitcitations`? - manual easier?
 
+<<<<<<< HEAD
 \newpage 
 
 # Appendix
@@ -238,5 +257,39 @@ kable(km_cluster_summary_stats, caption="Average Statistics Rating Across Standa
 ```{r, echo=FALSE}
 kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standard K-means (Stats Data)")
 
+=======
+# Appendix
+
+## A: Loading Vectors
+
+```{r fig.cap = "PCA PC1 extreme value Pokémon. Seems to reflect area.", echo=FALSE}
+load("Figures/appendix_A.RData")
+(pc1_pos1 + labs(title = "PC1 Positive Extreme: Wailord") +
+    pc1_pos2 + labs(title = "PC1 Positive Extreme: Abomasnow")) /
+  (pc1_neg1 + labs(title = "PC1 Negative Extreme: Elgyem") +
+     pc1_neg2 + labs(title = "PC1 Negative Extreme: Geodude"))
+```
+
+```{r fig.cap = "PCA 1st loading vector.", echo=FALSE}
+pca_v1
+```
+
+```{r fig.cap = "PCA PC2 extreme value Pokémon. Seems to reflect height-width ratio.", echo=FALSE}
+(pc2_pos1 + labs(title = "PC2 Positive Extreme: Slowking") +
+    pc2_pos2 + labs(title = "PC2 Positive Extreme: Gardevoir")) /
+  (pc2_neg1 + labs(title = "PC2 Negative Extreme: Alteria") +
+     pc2_neg2 + labs(title = "PC2 Negative Extreme: Swablu"))
+```
+
+```{r fig.cap = "PCA 2nd loading vector.", echo=FALSE}
+pca_v2
+```
+
+## B: Gardevoir Image Compression
+
+```{r fig.cap = "Images of the Pokémon Gardevoir. Left: Original. Right: After image compression with 175 PCs, capturing 80% of the variance explained.", echo=FALSE}
+load("Figures/appendix_B.RData")
+gardevoir_og + gardevoir_compressed
+>>>>>>> report
 ```
 
