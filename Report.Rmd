@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
 library(ggplot2)
 library(patchwork)
 library(forcats)
+library(knitr)
 ```
 
 ## Abstract
@@ -73,7 +74,7 @@ This structured dataset contains 41 variables for 801 Pokémon. These features i
 - **Categorical indicators:** Legendary status, abilities, and generation
 - **Primary and secondary type labels**
 
-All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values. **Notably**, we only consider primary type labels for this project to maintain a single-label classification structure.
+All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). **Notably**, we only consider primary type labels for this project to maintain a single-label classification structure.
 
 ```{r echo=FALSE}
 ## TO DO: Visuals
@@ -136,7 +137,61 @@ abomasnow_og + abomasnow_compressed
 
 ## Unsupervised Model
 
-- e.g. Weighted K-means
+```{r, echo=FALSE}
+load("Figures/cluster_res.RData")
+```
+
+This section evaluates if unsupervised models such as K-means clustering can accurately recover Pokemon types based on their numeric stats and image features. Specifically, we explore standard K-means clustering, K-means++ initialization, and weighted K-means clustering methods (distance-based weighting). We used dimensionality reduction methods such as PCA and UMAP before clustering the image data. We examine two Pokemon datasets, one including numeric stats (attack, defense, speed) and one including image data. Numeric missing data was imputed using K-Nearest Neighbours (KNN) imputation, and features with zero variance were removed. PCA was applied to both numeric data and image data to reduce dimensionality. For the numeric stats dataset, 20 principal components that explained 90% of the variance were kept. We also applied clustering methods on the UMAP features from the images to compare its accuracy against PCA.
+
+```{r, echo=FALSE, fig.height = 5, out.width = "80%", fig.cap="Visualization of true Pokemon types on PC1 and PC2"}
+plt_true
+```
+
+We set the initial number of clusters (k=18) to match the total number of Pokemon types. The clustering methods were compared using within sum of squares (wss), between sum of squares (bss), CH index, and accuracy. The labels of each cluster was assigned by labelling each cluster the most common type in that cluster - this allows us to compute accuracy by comparing the assigned labels with the true types.
+
+Clustering performance was also assessed by determining alternative optimal cluster numbers, identified through the elbow method (wss), silhouette score, CH index, and gap statistics. Testing for different number of clusters may help identify if there are consistent trends with the grouping of certain types of Pokemon, such as if there are certain types consistently grouped together. Additionally, if the optimal number of clusters is small, it suggests that the data might naturally form fewer larger groups. Comparing standard K-means and K-means++, the clusters had a wss of 12613.8 and 12848.89 respectively, and bss of 14360.22 and 14125.13 respectively. This suggests the stats dataset creates more distinct clusters with standard K-means clustering.
+
+```{r, echo = FALSE, fig.height = 5, out.width = "80%", fig.cap="Visualization of Pokemon types from K-means clustering on PC1 and PC2"}
+plt_km_stats
+```
+
+
+The clustering performance on numeric Pokemon stats resulted in moderate accuracy, with standard K-means and K-means++ methods performing similarly (approximately 52.4% - 52.9% accuracy). Weighted K-means had much lower accuracy (20.3%), suggesting that the distance based weighting did not benefit clustering with these data.
+
+Optimal cluster methods resulted in notably fewer clusters (ranging from k = 1 to 10) than the actual number of Pokemon types (18). The elbow method suggested k = 3, silhouette suggested k = 2, CH index suggested k = 1, and gap statistics suggested k = 10. Using k = 3, the accuracy was 17.2%, which is moderate as the types remaining were grass, water and psychic, which make up about 30.5% of the dataset. Overall, these results indicates that Pokemon numeric stats do not naturally cluster into distinct groups corresponding directly to each of the 18 types.
+
+```{r, echo=FALSE}
+kable(data.frame(
+  Method = c("K-means", "K-means++", "Weighted K-means", "Optimal K-means K = 3"),
+  Accuracy = c(kmeans_stats_acc, kmeans_stats_pp_acc, kmeans_w_stats_acc, kmeans_stats_opt_acc)
+), caption = "Clustering Method Accuracies on Stats Data")
+```
+
+In the image dataset, comparing standard K-means and K-means++, the clusters had a wss of 677488.2 and 696824.9 respectively, and bss of 288142.1 and 268805.4 respectively. This suggests the image dataset creates more distinct clusters with standard K-means clustering.
+
+Image clusters consistently produced lower accuracy than numeric stats. Standard K-means had approximately 18.1% accuracy, while K-means++ and weighted K-means performed similarly or worse (17.4% and 14.2%, respectively). This implies image features alone were insufficient to recover Pokemon types.
+
+Optimal cluster tuning again produced fewer optimal clusters (k = 1 to 10). Using k = 3, accuracy intuitively dropped further to 14.7%, indicating images likely contain common and general features across many Pokemon types, such as similar color or shapes, leading to ineffective cluster separations. The poor clustering accuracy highlights significant weaknesses in the image-based approach. Pokemon image characteristics appear not to strongly correlate with type when reduced to PCA features.
+
+```{r, echo=FALSE}
+kable(data.frame(
+  Method = c("K-means", "K-means++", "Weighted K-means", "Optimal K-means K = 3"),
+  Accuracy = c(kmeans_img_acc, kmeans_img_pp_acc, kmeans_w_img_acc, kmeans_img_opt_acc)
+), caption = "Clustering Method Accuracies on Image Data")
+```
+
+### UMAP-based Clustering
+
+UMAP dimensionality reduction was also applied on the image data to see if non-linear dimension reduction improves accuracy for recovering types. K-means with UMAP gave 18.6% accuracy and K-means++ with UMAP gave 18.2% accuracy. Although UMAP aims to uncover non-linear patterns, accuracy remained consistently low. UMAP’s nonlinear features did not significantly improve the separation of Pokemon types compared to PCA. This further confirms the difficulty in extracting type-specific visual characteristics from Pokemon image data, reinforcing the idea that image features do not map effectively onto the Pokemon types.
+
+### Comparing Clustering Methods
+
+Standard K-means and K-means++ gave similar performances across numeric and image datasets. Standard K-means slightly outperformed K-means++ in numeric stats, whereas K-means++ was less effective on image data. Weighted K-means consistently underperformed, which suggests that distance-based weighting do not match the structures in these datasets. Numeric stats clustering significantly outperformed image clustering, indicating that numeric stats more closely align with Pokemon types than images. 
+
+### Standard K-Means (K=18) Interpretations
+
+Looking deeper into the clustering results from standard K-means with k=18, we see how the K-means algorithm groups Pokemon based on their stats, independent of their actual types. This gives us an idea of whether Pokemon types with similar stats (high attack and speed, or high defense and hp) tend to cluster together. In general, it is common to see Pokemon with relatively similar attack, speed, or defensive stats cluster together, but this does not necessarily correspond to the type the Pokemon belongs to (See Table 4 in Appendix). In Table 5 in the appendix, some clusters were clearly dominated by a single type - such as water for cluster 11. There were some common clusters containing a mix of different types that could be linked through common attributes. For example, cluster 17 had ghost and psychic types dominate in this cluster - suggesting these types share common statistical features. Similarly, cluster 10 grouped many bug, grass, and poison types. Overall this suggests that statistical features like attack, defense, etc., might outweigh type-specific features when forming clusters.
+
 
 ## Supervised Model
 
@@ -159,11 +214,29 @@ abomasnow_og + abomasnow_compressed
 - Dual-typing might be causing some difficulties - adding complexity.
 - Perhaps other approaches, such as deep learning, might do better.
 
+## Clustering Discussion
+
+Some things that did not work include first grouping if the Pokemon is legendary or not. Implementing K-means on these groups separately resulted in clusters with larger wss (for non-legendary group) and lower bss - indicating less distinct clusters. Additionally, due to fewer observations in the legendary grouping, this caused a reduced ability to form meaningful clusters, as the smaller sample size led to less reliable cluster centers and higher variance within the legendary group.
+
+Overall, clustering performance varied significantly depending on the data type and method. While clustering could partially recover Pokemon types, it could not match the true labels efficiently - this suggests the structure of the data may not capture the complexity of the Pokemon types in a way that creates efficient and distinct clusters. Future analysis could incorporate other model-based clustering methods such as Gaussian mixture models.
+
+
+
 # References
 
 - Use `knitcitations`? - manual easier?
 
-# (Optional) Appendix
+\newpage 
 
-- If we have any "extra" non-essential tables that we want to include, but don't want contributing to the page limit.
+# Appendix
+
+
+```{r, echo=FALSE}
+kable(km_cluster_summary_stats, caption="Average Statistics Rating Across Standard K-means Clusters (Stats Data)")
+```
+
+```{r, echo=FALSE}
+kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standard K-means (Stats Data)")
+
+```
 
