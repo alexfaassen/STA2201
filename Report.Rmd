@@ -37,7 +37,7 @@ library(knitr)
 ## Contributions
 
 - Justin Zhang:
-- Isaac Baguisa:
+- Isaac Baguisa: Stats dimension reduction, Unsupervised models
 - Alex Faassen: Data pre-processing, Data exploration, Image dimension reduction
 
 # Introduction
@@ -244,7 +244,7 @@ Looking deeper into the clustering results from standard K-means with k=18, we s
 
 ## Clustering Discussion
 
-Some things that did not work include first grouping if the Pokemon is legendary or not. Implementing K-means on these groups separately resulted in clusters with larger wss (for non-legendary group) and lower bss - indicating less distinct clusters. Additionally, due to fewer observations in the legendary grouping, this caused a reduced ability to form meaningful clusters, as the smaller sample size led to less reliable cluster centers and higher variance within the legendary group.
+Some things that did not work include first grouping if the Pokemon is legendary or not. Implementing K-means on these groups separately resulted in clusters with larger wss (for non-legendary group) and lower bss - indicating less distinct clusters. Additionally, due to fewer observations in the legendary grouping, this caused a reduced ability to form meaningful clusters, as the smaller sample size led to less reliable cluster centers and higher variance within the legendary group. Additional limitations include the method for assigning cluster labels. Due to imbalanced data, it is common for the total number of clusters to be reduced from 18.
 
 Overall, clustering performance varied significantly depending on the data type and method. While clustering could partially recover Pokemon types, it could not match the true labels efficiently - this suggests the structure of the data may not capture the complexity of the Pokemon types in a way that creates efficient and distinct clusters. Future analysis could incorporate other model-based clustering methods such as Gaussian mixture models.
 
