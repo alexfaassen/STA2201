@@ -89,6 +89,7 @@ library(png)
 library(ggplot2)
 library(patchwork)
 library(forcats)
+library(tidyr)
 
 ## Example Pokemon
 ex1 = readPNG("Data/images/pikachu.png")
@@ -147,6 +148,18 @@ type_attack = ggplot(filtered_data, aes(x = type1, y = attack, fill = type1)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
 
+# Boxplot of Sp. Attack by Type
+type_sp_attack = ggplot(filtered_data, aes(x = type1, y = sp_attack, fill = type1)) +
+  geom_boxplot() +
+  scale_fill_manual(values = type_cols) +
+  labs(
+    title = "Special Attack Stat Distributions",
+    x = "Primary Type",
+    y = "Special Attack Stat"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+
 ## Table of summary stats for key features
 key_features <- c("hp", "attack", "defense", "sp_attack", "sp_defense", "speed", "height_m", "weight_kg")
 
@@ -169,7 +182,7 @@ summary_table <- stats %>%
   pivot_wider(names_from = Statistic, values_from = Value)
 
 # Save
-save(p1, p2, type_freq, type_attack, summary_table, file = "Figures/data_description.RData")
+# save(p1, p2, type_freq, type_attack, type_sp_attack, summary_table, file = "Figures/data_description.RData")
 
 ## Reset
 rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars
@@ -264,24 +277,25 @@ print(rownames(smallest_pc1_pokemon))
 ```{r}
 ## PC1
 # Extremes
-pos1 = plotImg(getImg(images[stats$name == "Wailord", -1]))
-pos2 = plotImg(getImg(images[stats$name == "Abomasnow", -1]))
-neg1 = plotImg(getImg(images[stats$name == "Elgyem", -1])) # Pikipek
-neg2 = plotImg(getImg(images[stats$name == "Geodude", -1])) # Unown
+pc1_pos1 = plotImg(getImg(images[stats$name == "Wailord", -1]))
+pc1_pos2 = plotImg(getImg(images[stats$name == "Abomasnow", -1]))
+pc1_neg1 = plotImg(getImg(images[stats$name == "Elgyem", -1])) # Pikipek
+pc1_neg2 = plotImg(getImg(images[stats$name == "Geodude", -1])) # Unown
 # exPlots = sapply(c(pos1, pos2, neg1, neg2), function(rgba) plotImg(getImg(rgba)))
 # (pos1 + pos2) / (neg1 + neg2)
-final_plot = (pos1 + labs(title = "Most Positive PC1: Wailord") +
-              pos2 + labs(title = "Second Positive PC1: Abomasnow")) /
-             (neg1 + labs(title = "Most Negative PC1: Elgyem") +
-              neg2 + labs(title = "Second Negative PC1: Geodude"))
-print(final_plot)
+pc1_outliers = (pos1 + labs(title = "PC1 Positive Extreme: Wailord") +
+              pos2 + labs(title = "PC1 Positive Extreme: Abomasnow")) /
+             (neg1 + labs(title = "PC1 Negative Extreme: Elgyem") +
+              neg2 + labs(title = "PC1 Negative Extreme: Geodude"))
+print(pc1_outliers)
 
 # Loading Vector
 pca = PCA$rotation[,1]
 pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
 # pca_norm = (pca - mean(pca))/(2 * sd(pca))
 # pca_clip = pmax(pmin(pca, 1), 0)
-plotImg(getImg(pca_norm))
+pca_v1 = plotImg(getImg(pca_norm))
+pca_v1
 
 ## Notes:
 # - Likely corresponds to Pokemon image Area.
@@ -290,26 +304,31 @@ plotImg(getImg(pca_norm))
 ```{r}
 ## PC2
 # Extremes
-pos1 = plotImg(getImg(images[stats$name == "Slowking", -1]))
-pos2 = plotImg(getImg(images[stats$name == "Gardevoir", -1]))
-neg1 = plotImg(getImg(images[stats$name == "Altaria", -1]))
-neg2 = plotImg(getImg(images[stats$name == "Swablu", -1]))
+pc2_pos1 = plotImg(getImg(images[stats$name == "Slowking", -1]))
+pc2_pos2 = plotImg(getImg(images[stats$name == "Gardevoir", -1]))
+pc2_neg1 = plotImg(getImg(images[stats$name == "Altaria", -1]))
+pc2_neg2 = plotImg(getImg(images[stats$name == "Swablu", -1]))
 # exPlots = sapply(c(pos1, pos2, neg1, neg2), function(rgba) plotImg(getImg(rgba)))
 # (pos1 + pos2) / (neg1 + neg2)
-final_plot = (pos1 + labs(title = "Most Positive PC1: Slowking") +
-              pos2 + labs(title = "Second Positive PC1: Gardevoir")) /
-             (neg1 + labs(title = "Most Negative PC1: Altaria") +
-              neg2 + labs(title = "Second Negative PC1: Swablu"))
-print(final_plot)
+pc2_outliers = (pos1 + labs(title = "PC1 Positive Extreme: Slowking") +
+              pos2 + labs(title = "PC1 Positive Extreme: Gardevoir")) /
+             (neg1 + labs(title = "PC1 Negative Extreme: Altaria") +
+              neg2 + labs(title = "PC1 Negative Extreme: Swablu"))
+print(pc2_outliers)
 
 # Loading Vector
 pca = PCA$rotation[,2]
 pca_norm = (pca - min(pca)) / (max(pca) - min(pca))
-plotImg(getImg(pca_norm))
+pca_v2 = plotImg(getImg(pca_norm))
+pca_v2
 
 ## Notes:
 # - Likely corresponds to a Pokemon's relative width/height ratio.
 # - Notably, neither PC1 nor PC2 correspond to colour, yet.
+
+## Save
+# save(pc1_pos1, pc1_pos2, pc1_neg1, pc1_neg2, pca_v1, pc2_pos1, pc2_pos2,
+#      pc2_neg1, pc2_neg2, pca_v2, file = "Figures/appendix_A.RData")
 ```
 
 ## Variance Explained
@@ -369,6 +388,9 @@ gardevoir_compressed = plotImg(getImg(scores_95VE_clip)) +
   labs(title = paste("PCA Reconstructed (", num_pcs, " PCs)", sep=""))
 # Side by side
 gardevoir_og + gardevoir_compressed
+
+## Save
+# save(gardevoir_og, gardevoir_compressed, file = "Figures/appendix_B.RData")
 ```
 
 ## Save Report Images
@@ -377,7 +399,8 @@ gardevoir_og + gardevoir_compressed
 ## Cumulative VE + Biplot
 mod_cumVE = pca_cumVE + theme(legend.position = "none") + labs(title = "Cumulative Variance Explained")
 mod_biplot = pca_biplot + labs(title = "Biplot (PC1 vs. PC2)") + theme_minimal() + theme(legend.position = "none")
-cumVE_biplot = mod_cumVE + mod_biplot
+cumVE_biplot = mod_biplot + mod_cumVE
+  # mod_cumVE + mod_biplot
 cumVE_biplot
 ggsave("Figures/scree_biplot.png", plot = cumVE_biplot, width = 7, height = 4, units = "in")
 
@@ -414,16 +437,52 @@ load("DimensionReduction/umap_pokemon.rds")
 type_colours = type_colours[match(levels(stats$type1), names(type_colours))] # Colours
 
 umap_df = data.frame(x = UMAP_imgs$layout[,1], y = UMAP_imgs$layout[,2], type = stats$type1)
-ggplot(umap_df, aes(x, y, color = type)) +
+umap_plt = ggplot(umap_df, aes(x, y, color = type)) +
   geom_point(alpha = 0.7) +
   theme_minimal() +
   scale_colour_manual(values = type_colours) +
-  ggtitle("UMAP Projection")
+  ggtitle("UMAP Projection") +
+  theme(legend.position = "none")#"left")
+umap_plt
 
 ## Save object
 # save(UMAP_imgs, file = "umap_pokemon.rds")
 
 # Note: Too large to save on GitHub.
+```
+
+```{r}
+# Define key types to highlight
+highlight_types = c("dark", "fairy", "poison")
+# Clustered types: Dark, Fairy, Poison
+# Less-well clustered: Flying
+
+# Reassign colors: keep highlights, grey out others
+highlight_colours = type_colours
+highlight_colours["dark"] = "black"
+highlight_colours["fairy"] = "pink"
+highlight_colours["poison"] = "purple"
+highlight_colours[!(names(highlight_colours) %in% highlight_types)] = "grey80"
+
+# Create updated UMAP dataframe
+umap_df = data.frame(
+  x = UMAP_imgs$layout[,1],
+  y = UMAP_imgs$layout[,2],
+  type = stats$type1
+)
+
+# Plot with custom color mapping
+umap_plt_col = ggplot(umap_df, aes(x, y, color = type)) +
+  geom_point(alpha = 0.7, size = 1.5) +
+  scale_colour_manual(values = highlight_colours) +
+  theme_minimal() +
+  ggtitle("Dark, Fairy, and Poison Types") +
+  theme(legend.position = "none")
+
+umap_plt_col
+
+## Save
+save(umap_plt, umap_plt_col, file = "Figures/umap_plt.RData")
 
 ## Reset
 global_vars = c(global_vars, "UMAP_imgs")
