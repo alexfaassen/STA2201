@@ -104,8 +104,8 @@ p1 + p2
 
 
 
-## Top Pokemon Types: Bar Chart + Attack Boxplot
-type_cols <- c(
+## Type Colours
+type_cols = c(
   "bug" = "#A8B820", "dark" = "#705848", "dragon" = "#7038F8", "electric" = "#F8D030",
   "fairy" = "#EE99AC", "fighting" = "#C03028", "fire" = "#F08030", "flying" = "#A890F0",
   "ghost" = "#705898", "grass" = "#78C850", "ground" = "#E0C068", "ice" = "#98D8D8",
@@ -113,6 +113,9 @@ type_cols <- c(
   "steel" = "#B8B8D0", "water" = "#6890F0"
 )
 
+
+
+## Top Pokemon Types: Bar Chart + Attack Boxplot
 # Top N primary types (by freq)
 top5_types <- stats %>%
   mutate(type1 = tolower(type1)) %>%
@@ -135,6 +138,8 @@ type_freq = ggplot(filtered_data, aes(x = fct_infreq(type1), fill = type1)) +
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "left")
+
+
 
 # Boxplot of Attack by Type
 type_attack = ggplot(filtered_data, aes(x = type1, y = attack, fill = type1)) +
@@ -160,6 +165,8 @@ type_sp_attack = ggplot(filtered_data, aes(x = type1, y = sp_attack, fill = type
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
 
+
+
 ## Table of summary stats for key features
 key_features <- c("hp", "attack", "defense", "sp_attack", "sp_defense", "speed", "height_m", "weight_kg")
 
@@ -181,8 +188,27 @@ summary_table <- stats %>%
                values_to = "Value") %>%
   pivot_wider(names_from = Statistic, values_from = Value)
 
+
+
+## Primary type distribution
+type_counts = as.data.frame(table(stats$type1))
+colnames(type_counts) = c("Type", "Count")
+
+type_dist = ggplot(type_counts, aes(x = reorder(Type, -Count), y = Count, fill = Type)) +
+  geom_bar(stat = "identity", color = "black") +
+  geom_text(aes(label = Count), vjust = -0.3, size = 3.5) +  # Data labels
+  scale_fill_manual(values = type_cols) +
+  labs(title = "Primary Type Distribution",
+       x = "Pokémon Type", y = "Number of Pokémon") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
+  ylim(0, max(type_counts$Count) * 1.1)  # Add space for the labels
+# type_dist
+
+
+
 # Save
-# save(p1, p2, type_freq, type_attack, type_sp_attack, summary_table, file = "Figures/data_description.RData")
+# save(p1, p2, type_freq, type_attack, type_sp_attack, summary_table, type_dist, file = "Figures/data_description.RData")
 
 ## Reset
 rm(list = setdiff(ls(), global_vars)) # Remove all vars except for global_vars

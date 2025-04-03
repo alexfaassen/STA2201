@@ -76,7 +76,7 @@ This structured dataset contains 41 variables for 801 Pokémon. These features i
 - **Categorical indicators:** Legendary status, abilities, and generation
 - **Primary and secondary type labels**
 
-All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values. For this project, we **only consider primary type** labels to maintain a single-label classification structure.
+All variables are numeric or have been encoded numerically (e.g., legendary status as 0/1). There are no missing values.
 
 ```{r echo=FALSE}
 ## Summary_stats
@@ -88,9 +88,7 @@ knitr::kable(summary_table, caption = "Summary Statistics for Key Features")
 Combat statistics, such as `attack`, `defense`, `sp_attack`, `sp_defense`, and `speed`, show similar ranges, with means around 66–78 and standard deviations near 30. These distributions suggest balanced but varied combat capabilities, with maximum values exceeding 180 or 230, likely representing fully evolved or legendary Pokémon. `hp` follows a similar pattern with a slightly lower mean of 69 and a maximum of 255, again suggesting outliers with extreme values. In contrast, the physical attributes, `height_m` and `weight_kg`, seem to be skewed. The average height is just over 1 meter, but with a maximum of 14.5 meters. Weight displays even greater disparity, ranging from under 1 kg to nearly 1000 kg. This indicates that a few extremely large Pokémon (e.g., Wailord) heavily influence these distributions.
 
 ```{r fig.cap = "Frequency and attack statistic distributions of the top 5 Pokémon primary types by frequency.", echo=FALSE}
-## Attack stat distributions
-# - Make side by side with Sp. attack?
-# type_freq + type_attack
+## Attack vs. Sp. Attack stat distributions
 type_attack + type_sp_attack
 ```
 
@@ -109,6 +107,15 @@ This visualization supports the idea that while some types, like `normal`, may l
 ## Pre-processing
 
 For the images, we begin by flattening each PNG into a (120x120x4) 57600-element vector, each pixel and RGBA value representing a feature. Binding these vectors into a table identified by Pokémon name gives us a usable dataset. To integrate image features with the stats dataset, we filter both tables to common Pokémon requiring several name formatting adjustments to account for unusual characters. Finally, we match the row-order of both datasets, resulting in two easily transferable Pokémon datasets.
+
+## Primary Types
+
+```{r fig:type_dist, fig.cap = "Pokémon primary type distribution.", echo=FALSE}
+## Primary type distribution
+type_dist
+```
+
+\textbf{Figure 3} shows the distribution of Pokémon by the **18 primary types** across the transformed datasets. For this project, we **only consider primary type** labels to maintain a single-label classification structure. With this in mind, we observe a notable class imbalance, with certain types like `water` (114 Pokémon), `normal` (105), and `grass` (78) appearing much more frequently than rarer types such as `fairy` (18) and `flying` (3). This uneven distribution has important implications for clustering classification metrics and interpretations.
 
 # Methodology
 
@@ -129,11 +136,11 @@ load("Figures/img_dim_red.RData")
 cumVE_biplot_img
 ```
 
-\textbf{Figure 3} above summarizes the results of applying PCA to the flattened Pokémon image data.
+\textbf{Figure 4} above summarizes the results of applying PCA to the flattened Pokémon image data.
 
 On the left, the biplot visualizes the Pokémon with respect to the first 2 principal components (PCs), **PC1 (13.03%)** and **PC2 (5.25%)**. Each point corresponds to a Pokémon, colour-coded by its primary type. While its possible that there are weak groupings, all types seem to be heavily overlapping. This is somewhat unsurprising given the first 2 PCs only represent roughly 18% of the variance. Further, \textbf{Appendix A} examines the first 2 **loading vectors** which seem to correspond to Pokémon area (i.e. height-width stretch) and height-width ratio respectively, neither of which seem particularly promising on their own for type clustering. These findings motivate the use of non-linear methods, such as **UMAP** or **t-SNE**, which are better suited for uncovering type-based structure in complex image data.
 
-On the right, the **cumulative variance explained** plot shows that the first few PCs capture a substantial portion of the variance, but with diminishing returns beyond the first 100 components. To retain at least **80% of the total variance**, we selected the first **175 PCs** (indicated by the blue vertical line). This threshold strikes a balance between compression and information preservation with a slightly greater emphasis on compression, and these 175 components are used in downstream clustering and classification steps. Below, \textbf{Figure 4} and \textbf{Appendix B} provide visual examples of the degree of compression applied before applying clustering algorithms.
+On the right, the **cumulative variance explained** plot shows that the first few PCs capture a substantial portion of the variance, but with diminishing returns beyond the first 100 components. To retain at least **80% of the total variance**, we selected the first **175 PCs** (indicated by the blue vertical line). This threshold strikes a balance between compression and information preservation with a slightly greater emphasis on compression, and these 175 components are used in downstream clustering and classification steps. Below, \textbf{Figure 5} and \textbf{Appendix B} provide visual examples of the degree of compression applied before applying clustering algorithms.
 
 ```{r fig.cap = "Images of the Pokémon Abomasnow. Left: Original. Right: After image compression with 175 PCs, capturing 80% of the variance explained.", echo=FALSE}
 ## Image compression
@@ -149,7 +156,7 @@ load("Figures/umap_plt.RData")
 umap_plt + umap_plt_col
 ```
 
-To uncover non-linear structure in the image data, we applied **Uniform Manifold Approximation and Projection (UMAP)**. Unlike PCA, which is a linear method, UMAP is designed to preserve both local and global relationships in high-dimensional spaces, making it particularly effective for image-based clustering. \textbf{Figure 5} displays the 2D UMAP projection of the 801 Pokémon image vectors, coloured by their primary type.
+To uncover non-linear structure in the image data, we applied **Uniform Manifold Approximation and Projection (UMAP)**. Unlike PCA, which is a linear method, UMAP is designed to preserve both local and global relationships in high-dimensional spaces, making it particularly effective for image-based clustering. \textbf{Figure 6} displays the 2D UMAP projection of the 801 Pokémon image vectors, coloured by their primary type.
 
 Once again, with the large numper of types, it is very hard to visually identify groupings. Upon close inspection, there does seem to be slightly more grouping between certain types, such as `dark`, `fairy`, and `poison`. However, for the most part, most types appear to be largely overlapping. Though types aren't particularly distinct, there does seem to be some improvement over the PCA biplot. Overall, UMAP provides stronger visual evidence that type-specific patterns may exist in the high-dimensional image data.
 
