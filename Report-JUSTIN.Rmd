@@ -29,10 +29,11 @@ library(forcats)
 library(knitr)
 ```
 
-## Abstract
+\begin{abstract}
+This project investigates whether a Pokémon’s type can be predicted from its image and statistical attributes using clustering and classification techniques. Using two datasets, one containing Pokémon images and another with combat and physical stats, we apply PCA and UMAP for dimensionality reduction, and K-means, LDA, and gradient boosting for modelling. Clustering results show weak alignment between type and visual features, while supervised classification on stats achieves higher accuracy. These results suggest that Pokémon types may be more strongly reflected in numerical attributes than visual appearance.
+\end{abstract}
 
-- Report Summary
-- Link GitHub?
+
 
 ## Contributions
 
@@ -45,9 +46,9 @@ library(knitr)
 Over the past two decades, Pokémon has evolved from a niche Gameboy game into a global multimedia franchise encompassing anime, trading cards, e-sports competitions, and mobile applications. For many who grew up in the late 2000s and early 2010s, the world of Pokémon was a formative part of childhood entertainment alongside cultural staples like Mario Bros. and Zelda. As Pokémon continues to captivate audiences across generations, its community-oriented game design and well-structured universe presents an intriguing opportunity for data analysis. In this project, we investigate whether a Pokémon's type—a categorical label used in-game to denote elemental or behavioral characteristics such as Fire, Water, or Grass—can be inferred from its visual appearance and numerical attributes using statistical learning techniques.
 
 Our primary research question is:
-\textit{Can clustering and classification methods uncover or predict a Pokémon’s type based on its image and statstical features?}
+\textit{Can clustering and classification methods uncover or predict a Pokémon’s type based on its image and statistical features?}
 
-The Pokémon type system serves not only as a game mechanic but also as a conceptual grouping based on traits like colour, strength, and theme. We aim to explore whether these groupings have an underlying statistical structure that can be detected through dimensionality reduction, clustering, and classification algorithms. This analysis will provide insight into the extent to which a Pokémon’s type is reflected in its appearance and physical characteristics, or whether it is a more arbitrary design choice by game developers.
+The Pokémon type system serves not only as a game mechanic but also as a conceptual grouping based on traits like colour, strength, and theme. We aim to explore whether these groupings have an underlying statistical structure that can be detected through dimensionality reduction, clustering, and classification algorithms. This analysis will provide insight into the extent to which a Pokémon’s type is reflected in its appearance and physical characteristics, or whether it is a more arbitrary design choice by game developers. We approach this question using unsupervised and supervised learning techniques including PCA, UMAP, K-means, LDA, and gradient boosting.
 
 # Data Description
 
@@ -80,7 +81,7 @@ All variables are numeric or have been encoded numerically (e.g., legendary stat
 
 ```{r echo=FALSE}
 ## Summary_stats
-knitr::kable(summary_table, caption = "Summary Statistics for Key Features")
+kable(summary_table, caption = "Summary Statistics for Key Features")
 ```
 
 \textbf{Table 1} provides an overview of the distribution of key numeric features across Pokémon in the dataset. Several notable patterns emerge:
@@ -117,7 +118,7 @@ type_dist
 
 \textbf{Figure 3} shows the distribution of Pokémon by the **18 primary types** across the transformed datasets. For this project, we **only consider primary type** labels to maintain a single-label classification structure. With this in mind, we observe a notable class imbalance, with certain types like `water` (114 Pokémon), `normal` (105), and `grass` (78) appearing much more frequently than rarer types such as `fairy` (18) and `flying` (3). This uneven distribution has important implications for clustering classification metrics and interpretations.
 
-# Methodology and Reulsts
+# Methodology and Results
 
 In this section we run three types of analysis: principal component analysis, unsupervised learning (k-means), and supervised learning (linear discriminant analysis, gradient boosting). We will describe the analysis conducted and then showcase the interesting results. Note that non-informative results will be in the appendix or omitted for brevity.
 
@@ -129,9 +130,8 @@ To explore whether Pokémon types are distinguishable based on their visual feat
 
 PCA is a linear technique that identifies the directions of maximal variance in the dataset. After centering the flattened image matrix, we applied PCA and examined the principal components, loading vectors, and compression options.
 
-```{r fig.cap = "Left: Cumulative Variance Explained (VE) by principal components (PC). The blue and black dashed lines represent 80% and 95% of VE respectively. Right: Biplot for the first 2 PCs.", echo=FALSE}
-## Scree plot + Biplot
-# - Switch sides (want to talk about biplot first - transition to image compression with cum VE)
+```{r fig.cap = "Left: Biplot for the first 2 PCs. Right: Cumulative Variance Explained (VE) by principal components (PC). The blue and black dashed lines represent 80% and 95% of VE respectively. ", echo=FALSE}
+## Cumulative VE + Biplot
 load("Figures/img_dim_red.RData")
 cumVE_biplot_img
 ```
@@ -158,7 +158,7 @@ umap_plt + umap_plt_col
 
 To uncover non-linear structure in the image data, we applied **Uniform Manifold Approximation and Projection (UMAP)**. Unlike PCA, which is a linear method, UMAP is designed to preserve both local and global relationships in high-dimensional spaces, making it particularly effective for image-based clustering. \textbf{Figure 6} displays the 2D UMAP projection of the 801 Pokémon image vectors, coloured by their primary type.
 
-Once again, with the large numper of types, it is very hard to visually identify groupings. Upon close inspection, there does seem to be slightly more grouping between certain types, such as `dark`, `fairy`, and `poison`. However, for the most part, most types appear to be largely overlapping. Though types aren't particularly distinct, there does seem to be some improvement over the PCA biplot. Overall, UMAP provides stronger visual evidence that type-specific patterns may exist in the high-dimensional image data.
+Once again, with the large numper of types, it is very hard to visually identify groupings. Upon close inspection, there does seem to be slightly more grouping between certain types, such as `dark`, `fairy`, and `poison`. However, for the most part, types appear to be largely overlapping. Though types aren't particularly distinct, there does seem to be some improvement over the PCA biplot. Overall, UMAP provides stronger visual evidence that type-specific patterns may exist in the high-dimensional image data.
 
 
 
@@ -225,7 +225,7 @@ Looking deeper into the clustering results from standard K-means with k=18, we s
 
 This section explores the performance of supervised models on the Pokemon stats dataset (note that results for the Pokemon images dataset is not presented as they provide no inferential capabilities). The purpose is twofold: to provide a baseline accuracy benchmark to compare the unsupervised models to, and to help determine whether we can predict Pokemon type. To do this we will run two models, linear discriminant analysis and gradient boosting. Linear discriminant analysis uses Bayes classifier to determine linear decision boundaries between types. As such, it is flexible to outliers, of which there are quite a few in our datasets, though it naturally performs worse when decision boundaries are non-linear, which is also the case. Gradient boosting is (at a high level) an ensemble learning algorithm based that iteratively fits decision trees on the previous residuals and updates prediction. In our classification setting, we use the log odds as the response and run the model for each class at each iteration. The major benefit here is that gradient boosting works quite well still with non-linear, non-separable data, though the downside is overfitting (which we can mitigate with hyperparameter tuning). The models are run on the same PCA dimension-reduced data as in the clustering section. Between the two models, we hope to learn the statistical makeup up different types of Pokemon.
 
-In these supervised models, we use 80-20 stratified train-test splits. This means within each Pokemon type, we choose 80% of the Pokemon to be in training set, and remaining 20% in test set. This will prevent over representation of certain types in each split, which will effect prediction accuracy for that specific type. This is particularly prevelant when we sub-group by generation, which results in small overall numbers of each Pokemon type.
+In these supervised models, we use 80-20 stratified train-test splits. This means within each Pokemon type, we choose 80% of the Pokemon to be in training set, and remaining 20% in test set. This will prevent over representation of certain types in each split, which will effect prediction accuracy for that specific type. This is particularly prevalent when we sub-group by generation, which results in small overall numbers of each Pokemon type.
 
 ## Linear Discriminant Analysis
 
@@ -239,7 +239,6 @@ lda_full
 
 ```{r, echo=FALSE}
 load("./Figures/Lda_full_res.RData")
-
 kable(lda_full_res, caption = "LDA Accuracy for Stats Data")
 ```
 
@@ -256,13 +255,12 @@ lda_gen1
 
 ```{r, echo=FALSE}
 load("./Figures/Lda_gen_res.RData")
-
 kable(comb_error, caption = "LDA Accuracy for Stats Data - by Generation")
 ```
 
 ## Gradient Boosting
 
-We run gradient boosting (XGBoost) on the probability of each Pokemon being a specific type. Results of these models are displayed in Table 6. To keep this from becoming a hyperparameter tuning exercise, we used the values 100 iterations (trees), max depth of 3, while tuning for shrinkage factor, which is optimal around 0.2. The training accuracy is near perfect, however, we do see loss of accuracy on the test, which is consistent with our knowledge that gradient does tend to overfit data. Figure 10 shows which Pokemon in the test set were missclassifed. We also ran the gradient boosting on each specific generation, and again test accuracy noticeably improves. 
+We run gradient boosting (XGBoost) on the probability of each Pokemon being a specific type. Results of these models are displayed in Table 6. To keep this from becoming a hyperparameter tuning exercise, we used the values 100 iterations (trees), max depth of 3, while tuning for shrinkage factor, which is optimal around 0.2. The training accuracy is near perfect, however, we do see loss of accuracy on the test, which is consistent with our knowledge that gradient does tend to overfit data. Figure 10 shows which Pokemon in the test set were misclassifed. We also ran the gradient boosting on each specific generation, and again test accuracy noticeably improves. 
 
 These results show that LDA is the superior statistical method in predicting Pokemon type. This is due to its flexibility in model fit, as gradient boosting suffers from overfitting. Overall, these results show that we are able to predict Pokemon type based on statistics with high accuracy. 
 
@@ -283,12 +281,6 @@ gbm_plot
 
 # Discussion
 
-- Discuss model performance
-- Limitations of methodology
-  - Potential sources of bias
-- Challenges encountered
-- Recommendations for overcoming these + improvements for future work
-
 Overall, the models did a far better job of predicting Pokemon type than we had originally anticipated. As Pokemon enjoyers, oftentimes there is little rhyme or reason to why certain types have specific attributes, as it is Pokemon specific. We thought the structure of the data may not capture the complexity of the Pokemon types in a way that creates efficient and distinct clusters. However, clustering on Pokemon stats still resulted in around 50% classification accuracy (across 18 classes), which though not great, beat expectations. Supervised learning algorithms had very high test accuracy, showing that classification based on Pokemon stats is quite applicable. On the other hand, classification based on Pokemon image was not successful, with low accuracy in both supervised and unsupervised settings.
 
 A significant limitation we faced is non-uniformity between number of each Pokemon types. Notably, fairy and dragon types were not even introduced until later generations, meaning there is a comparative lack of them in the dataset. In supervised models, train-test splits used stratification to account for this issue. In unsupervised learning, it caused an inability to cluster together groups with comparatively low numbers, with most clusters being predominantly 'water' or 'normal' types. Another limitation is the presence of dual typing, meaning Pokemon have a primary and secondary type, which introduces a confounding factor. For example, fire-fighting Pokemon and fire-psychic Pokemon are quite different, which will make it more difficult to accuratley classify the Pokemon type.
@@ -298,11 +290,6 @@ Our calculation of classification accuracy in clustering is biased by the non-un
 Some of these biases and limitations like non-uniformity of Pokemon types is intrinsic and hard to correct for (specifically in unsupervised models). We can account for dual typing in supervised models by classifying each hybrid type individually, though this may run into problems with low samples size for individual hyprid types. When working with Pokemon image data, we can change our approach from treating each pixel as a variable to creating our own descriptional variables from the images such as 'presence_of_(colour)' and 'number_of_non-white_pixels'. In this way we can hopefully cluster based on image characteristics, which do change by type (for example fire Pokemon often have red). Furthermore, we combine these image characteristics with the statistics dataset, and run analysis on that. Additionally, we can try out different types of models for both supervised and unsupervised learning, like Gaussian mixture models. 
 
 
-
-
-# References
-
-- Use `knitcitations`? - manual easier?
 
 \newpage 
 
