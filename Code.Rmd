@@ -59,7 +59,7 @@ flatten_img = function(img_path) {
 
 # Image Dataset
 images = sapply(image_list, flatten_img) %>% t() %>% as.data.frame() %>%
-  mutate(image_path = image_list) %>% select(image_path, everything())
+  mutate(image_path = image_list) %>% dplyr::select(image_path, everything())
 # colnames(images) = c("image_path", rep())
 # Check
 images[1:5, 1:5]
@@ -172,7 +172,7 @@ key_features <- c("hp", "attack", "defense", "sp_attack", "sp_defense", "speed",
 
 # Summary stats
 summary_table <- stats %>%
-  select(all_of(key_features)) %>%
+  dplyr::select(all_of(key_features)) %>%
   summarise(across(everything(), list(
     mean = ~round(mean(.x, na.rm = TRUE), 2),
     sd = ~round(sd(.x, na.rm = TRUE), 2),
@@ -309,10 +309,10 @@ pc1_neg1 = plotImg(getImg(images[stats$name == "Elgyem", -1])) # Pikipek
 pc1_neg2 = plotImg(getImg(images[stats$name == "Geodude", -1])) # Unown
 # exPlots = sapply(c(pos1, pos2, neg1, neg2), function(rgba) plotImg(getImg(rgba)))
 # (pos1 + pos2) / (neg1 + neg2)
-pc1_outliers = (pos1 + labs(title = "PC1 Positive Extreme: Wailord") +
-              pos2 + labs(title = "PC1 Positive Extreme: Abomasnow")) /
-             (neg1 + labs(title = "PC1 Negative Extreme: Elgyem") +
-              neg2 + labs(title = "PC1 Negative Extreme: Geodude"))
+pc1_outliers = (pc1_pos1 + labs(title = "PC1 Positive Extreme: Wailord") +
+              pc1_pos2 + labs(title = "PC1 Positive Extreme: Abomasnow")) /
+             (pc1_neg1 + labs(title = "PC1 Negative Extreme: Elgyem") +
+              pc1_neg2 + labs(title = "PC1 Negative Extreme: Geodude"))
 print(pc1_outliers)
 
 # Loading Vector
@@ -336,10 +336,10 @@ pc2_neg1 = plotImg(getImg(images[stats$name == "Altaria", -1]))
 pc2_neg2 = plotImg(getImg(images[stats$name == "Swablu", -1]))
 # exPlots = sapply(c(pos1, pos2, neg1, neg2), function(rgba) plotImg(getImg(rgba)))
 # (pos1 + pos2) / (neg1 + neg2)
-pc2_outliers = (pos1 + labs(title = "PC1 Positive Extreme: Slowking") +
-              pos2 + labs(title = "PC1 Positive Extreme: Gardevoir")) /
-             (neg1 + labs(title = "PC1 Negative Extreme: Altaria") +
-              neg2 + labs(title = "PC1 Negative Extreme: Swablu"))
+pc2_outliers = (pc2_pos1 + labs(title = "PC1 Positive Extreme: Slowking") +
+              pc2_pos2 + labs(title = "PC1 Positive Extreme: Gardevoir")) /
+             (pc2_neg1 + labs(title = "PC1 Negative Extreme: Altaria") +
+              pc2_neg2 + labs(title = "PC1 Negative Extreme: Swablu"))
 print(pc2_outliers)
 
 # Loading Vector
@@ -378,7 +378,7 @@ pca_cumVE = barplot(ve)+
   ylim(0, 1)+
   geom_hline(aes(yintercept = 0.9), linewidth = 1, linetype = "dashed") +
   geom_hline(aes(yintercept = 0.95), linewidth = 1, linetype = "dashed", color = "red") +
-  geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue", size = 1) +  # Highlight selected PC count
+  geom_vline(xintercept = num_pcs, linetype = "dotted", color = "blue", size = 1) +  
   annotate("text", x = num_pcs + 5, y = 0.5, label = paste0(num_pcs, " PCs retained"), color = "blue")
 pca_cumVE
 ```
@@ -537,7 +537,7 @@ load("Data/dr_pokemon2.RData")
 load("DimensionReduction/umap_pokemon.rds")
 
 stats_numeric <- stats %>%
-  select(-c(abilities, capture_rate, classfication, japanese_name, name,
+  dplyr::select(-c(abilities, capture_rate, classfication, japanese_name, name,
             name.simple, type1, type2, image_path, has_img))
 
 #Imputation on missing data using KNN
@@ -1155,8 +1155,241 @@ kable(table(comp_labels), caption = "Summary of Cluster Assignments from Standar
 # Classification
 
 ```{r}
-#
+# load packages
+library(MASS)
+library(gbm)
 ```
+
+```{r}
+#load data
+load("./Data/pokemon.RData")
+load("./Data/dr_pokemon2.RData")
+stats2 = read.csv('pokedex.csv')
+```
+
+```{r}
+do_LDA = function(data, train, attributes, to_plot, title){
+  x_train = as.matrix(data[train,attributes])
+  y_train = data[train,'type1']
+  x_test = as.matrix(data[-train,attributes])
+  y_test = data[-train,'type1']
+
+  LDA = lda(x_train, grouping = y_train)
+  
+  pred = predict(LDA)
+  PX = pred$x
+  df = data.frame(PX, types = pred$class)
+  predm = predict(LDA, LDA$means)
+  PM = predm$x
+  dfm = data.frame(PM, types = predm$class)
+  plt = ggplot(mapping = aes(LD1, LD2, color = types))+
+    geom_point(data = df)+
+    geom_point(data = dfm, color = "black", shape = 4, size = 3)
+
+  df2 = data.frame(PX, types = c(pred$class, y_train), type = c(rep("predicted", length(train)), rep("true", length(train))), row.names = NULL)
+  #print(df2)
+  plt2 = ggplot(df2, aes(LD1, LD2, color = types))+
+    geom_point()+
+    facet_wrap(~type)+
+    labs(title = title)
+
+  pred_test = predict(LDA, x_test)
+  PXtest = pred_test$x
+  accstest = c()
+  accs = c()
+  for(L in 1:10){
+    LDAreg_train = lda(PX[,1:L,drop = F], grouping = y_train)
+    labelsreg_train = predict(LDAreg_train)$class
+    #labelsreg = classify(PX[,1:L,drop = F], PM[,1:L, drop = F], pi)
+    accs = c(accs, mean(y_train == labelsreg_train))
+  
+    LDAreg = lda(PX[,1:L,drop = F], grouping = y_train)
+    labelsreg = predict(LDAreg, PXtest[,1:L,drop = F])$class
+    #labelsreg = classify(PXtest[,1:L,drop = F], PM[,1:L, drop = F], pi)
+    accstest = c(accstest, mean(y_test == labelsreg))
+  }
+  
+  return(list(data.frame(L = 1:10, accuracy_train = accs, accuracy_test = accstest), plt, plt2))
+  
+  }
+
+```
+
+```{r}
+# set missing values from other Pokemon dataset and remove non-numerical attributes
+names_comp = c(tolower(stats[,'name.simple']), tolower(stats[,'name']))
+stats$weight_kg = stats2[stats2[,'name'] %in% names_comp,]$weight
+stats$height_m = stats2[stats2[,'name'] %in% names_comp,]$height
+
+stats_num = stats[,!(colnames(stats) %in% c('abilities', 'capture_rate', 'classfication', 'japanese_name', 'name','name.simple', 'type1','type2', 'image_path', 'has_img', 'percentage_male'))]
+
+```
+
+```{r}
+pca_stats <- prcomp(stats_num, center = TRUE, scale. = TRUE)
+pca_stats_df <- as.data.frame(pca_stats$x)
+colnames(pca_stats_df) <- paste0("PC", 1:ncol(pca_stats_df))
+loadings <- pca_stats$rotation
+```
+
+```{r}
+var_explained <- summary(pca_stats)$importance[2, ]  # Proportion of variance explained
+cumulative_var <- cumsum(var_explained)
+# Keep 20 PCs (90% VE)
+pca_stats_df <- pca_stats_df[,1:20]
+```
+
+```{r}
+#combined dataframe for PDA, GB
+stats_comb = cbind(pca_stats_df, stats[,c('name', 'type1', 'generation')])
+```
+
+```{r}
+#get train set and run LDA on full dataset
+n = dim(stats_comb)[1]
+stats_comb$ind = seq(1, n, by=1)
+train = c()
+#use stratified sampling
+for(t in unique(stats_comb$type1)){
+  stat_t = stats_comb[stats_comb$type1 == t,]
+  train = c(train, sample(stat_t$ind, 0.8*dim(stat_t)[1]))
+}
+
+lda  = do_LDA(stats_comb, train, colnames(stats_comb)[1:20], T, 'LDA Classification All Pokemon (Stats)')
+
+```
+
+```{r}
+#Save plot/table
+lda_full = lda[[3]]
+save(lda_full,  file="./Figures/Lda_full.RData")
+
+lda_full_res = lda[[1]][1:8,]
+save(lda_full_res, file="./Figures/Lda_full_res.RData")
+```
+
+
+
+
+```{r, warning = F}
+#Run LDA on each generation of pokemon 
+test_error = data.frame(row.names = seq(1, 10, by=1))
+train_error = data.frame(row.names = seq(1, 10, by=1))
+for(i in unique(stats_comb$generation)){
+  gen_i = stats_comb[stats_comb$generation == i,]
+  n_i = dim(gen_i)[1]
+  gen_i$ind = seq(1, n_i, by=1)
+  train_i = c()
+  for(t in unique(stats$type1)){
+    gen_i_t = gen_i[gen_i$type1 == t,]
+    train_i = c(train_i, sample(gen_i_t$ind, 0.8*dim(gen_i_t)[1]))
+  }
+
+    lda = do_LDA(gen_i, train_i, colnames(stats_comb)[1:20], F, 'LDA Classification Gen 1 Pokemon (Stats)')
+  train_error[,i] =  lda[[1]][,'accuracy_train']
+  test_error[,i] =  lda[[1]][,'accuracy_test']
+  
+  #only want to save plot for gen1
+  if(i == 1){
+    lda_gen1 = lda[[3]]
+    save(lda_gen1,  file="./Figures/Lda_gen1.RData")
+  }
+}
+#train_error
+#test_error
+```
+
+```{r}
+#save table
+comb_error = cbind(train_error[3:6,1:4], test_error[3:6,1:4])
+colnames(comb_error) = c('gen1-train', 'gen2-train', 'gen3-train', 'gen4-train', 'gen1-test', 'gen2-test', 'gen3-test' ,'gen4-test')
+save(comb_error,  file="./Figures/Lda_gen_res.RData")
+```
+
+```{r, warning = F}
+do_GB = function(data, train, attributes, to_plot, s){
+  train_data = data[train,attributes]
+  test_data = data[-train,attributes]
+  rownames(test_data) = NULL
+
+  gbm_model = gbm(
+    formula = type1 ~ ., 
+    data = train_data, 
+    distribution = "multinomial", 
+    shrinkage = s, 
+    cv.folds = 1
+  )
+  pred_gbm_train = predict(gbm_model, newdata = train_data, n.trees = gbm_model$n.trees, type = 'response')
+  pred_gbm = predict(gbm_model, newdata = test_data, n.trees = gbm_model$n.trees, type = 'response')
+  #print(colnames(pred_gbm))
+  
+  train_test = ifelse(seq(1, dim(data)[1], by=1) %in% train, 'train', 'test - correct')
+  df= data.frame(data[,c('PC1', 'PC2')], test = train_test)
+  
+  correct_train = 0
+  for(i in 1:dim(pred_gbm_train)[1]){
+    pred_val = as.numeric(which.max(pred_gbm_train[i,,1]))
+    if(colnames(pred_gbm_train)[pred_val] == paste(train_data[i,'type1'])){
+      correct_train = correct_train + 1
+    }
+  }
+  train_accuracy = correct_train/dim(pred_gbm_train)[1]
+  
+  correct_test = 0
+  for(i in 1:dim(pred_gbm)[1]){
+    pred_val = as.numeric(which.max(pred_gbm[i,,1]))
+    if(colnames(pred_gbm)[pred_val] == paste(test_data[i,'type1'])){
+      correct_test = correct_test + 1
+    }
+    else{
+      df[!(df$test == 'test - correct'),][i,'test'] = 'test - incorrect'
+    }
+  }
+  test_accuracy = correct_test/dim(pred_gbm)[1]
+  
+  plt = ggplot(data = df, aes(PC1, PC2, col = factor(test))) + geom_point() + labs(title = 'Plot of Gradient Boosting Accuracy')
+  return(list(train_accuracy, test_accuracy, plt))
+}
+```
+
+```{r, warning = F}
+# run GB on with learn rate = 0.1 and print plot
+gb = do_GB(stats_comb, train, c(colnames(stats_comb)[1:20], 'type1'), T, 0.1)
+gbm_plot = gb[[3]]
+save(gbm_plot,  file="./Figures/GBM_plot.RData")
+```
+
+```{r, warning = F}
+#Show GB accuracy for different learn rates
+accuracy_gb = data.frame(shrinkage = c(0.01, 0.1, 0.25), train_accuracy = rep(0, 3), test_accuracy = rep(0, 3))
+shrinkage = c(0.01, 0.1, 0.25)
+#train_gb = sample(1:n, 0.8*n)
+for(s in 1:3){
+  gb = do_GB(stats_comb, train, c(colnames(stats_comb)[1:20], 'type1'), T, shrinkage[s])
+  accuracy_gb[s,'train_accuracy'] = gb[[1]]
+  accuracy_gb[s,'test_accuracy'] = gb[[2]]
+}
+
+save(accuracy_gb,  file="./Figures/GBM_res.RData")
+```
+
+```{r, warning = F}
+accuracy_df = data.frame(row.names = c('train', 'test'))
+for(i in unique(stats_comb$generation)){
+  gen_i = stats_comb[stats_comb$generation == i,]
+  n_i = dim(gen_i)[1]
+  gen_i$ind = seq(1, n_i, by=1)
+  train_i = c()
+  for(t in unique(stats_comb$type1)){
+    gen_i_t = gen_i[gen_i$type1 == t,]
+    train_i = c(train_i, sample(gen_i_t$ind, 0.8*dim(gen_i_t)[1]))
+  }
+  #train_i = sample(1:n_i, 0.8*n_i)
+  gb = do_GB(gen_i, train_i, c(colnames(stats_comb)[1:20], 'type1'), F, 0.1)
+  accuracy_df[,i] =  c(gb[[1]], gb[[2]])
+}
+```
+
 
 # Results
 
