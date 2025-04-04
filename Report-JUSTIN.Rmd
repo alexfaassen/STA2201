@@ -41,6 +41,8 @@ This project investigates whether a Pokémon’s type can be predicted from its 
 - Isaac Baguisa: Stats dimension reduction, Unsupervised models
 - Alex Faassen: Data pre-processing, Data exploration, Image dimension reduction
 
+**GitHub:** [STA2201 - Predicting Pokémon Types with Clustering and Classification](https://github.com/alexfaassen/STA2201)
+
 # Introduction
 
 Over the past two decades, Pokémon has evolved from a niche Gameboy game into a global multimedia franchise encompassing anime, trading cards, e-sports competitions, and mobile applications. For many who grew up in the late 2000s and early 2010s, the world of Pokémon was a formative part of childhood entertainment alongside cultural staples like Mario Bros. and Zelda. As Pokémon continues to captivate audiences across generations, its community-oriented game design and well-structured universe presents an intriguing opportunity for data analysis. In this project, we investigate whether a Pokémon's type—a categorical label used in-game to denote elemental or behavioral characteristics such as Fire, Water, or Grass—can be inferred from its visual appearance and numerical attributes using statistical learning techniques.
