@@ -37,7 +37,7 @@ This project investigates whether a Pokémon’s type can be predicted from its 
 
 ## Contributions
 
-- Justin Zhang:
+- Justin Zhang: Supervised Models, Discussion
 - Isaac Baguisa: Stats dimension reduction, Unsupervised models
 - Alex Faassen: Data pre-processing, Data exploration, Image dimension reduction
 
