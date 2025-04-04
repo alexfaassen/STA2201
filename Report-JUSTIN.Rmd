@@ -236,8 +236,9 @@ We start by running LDA on the entire PCA-reduced Pokemon stats dataset. The pri
 load("./Figures/Lda_full.RData")
 lda_full
 ```
+
 ```{r, echo=FALSE}
-load("./Figures/Lda_gen_res.RData")
+load("./Figures/Lda_full_res.RData")
 
 kable(lda_full_res, caption = "LDA Accuracy for Stats Data")
 ```
