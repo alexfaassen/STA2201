@@ -36,7 +36,7 @@ library(knitr)
 
 ## Contributions
 
-- Justin Zhang:
+- Justin Zhang: Supervised Models, Discussion
 - Isaac Baguisa: Stats dimension reduction, Unsupervised models
 - Alex Faassen: Data pre-processing, Data exploration, Image dimension reduction
 
