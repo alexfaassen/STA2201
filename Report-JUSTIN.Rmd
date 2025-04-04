@@ -117,7 +117,7 @@ type_dist
 
 \textbf{Figure 3} shows the distribution of Pokémon by the **18 primary types** across the transformed datasets. For this project, we **only consider primary type** labels to maintain a single-label classification structure. With this in mind, we observe a notable class imbalance, with certain types like `water` (114 Pokémon), `normal` (105), and `grass` (78) appearing much more frequently than rarer types such as `fairy` (18) and `flying` (3). This uneven distribution has important implications for clustering classification metrics and interpretations.
 
-# Methodology and Reulsts
+# Methodology and Results
 
 In this section we run three types of analysis: principal component analysis, unsupervised learning (k-means), and supervised learning (linear discriminant analysis, gradient boosting). We will describe the analysis conducted and then showcase the interesting results. Note that non-informative results will be in the appendix or omitted for brevity.
 
@@ -185,14 +185,14 @@ plt_km_stats
 
 The clustering performance on numeric Pokemon stats resulted in moderate accuracy, with standard K-means and K-means++ methods performing similarly (approximately 52.4% - 52.9% accuracy). Weighted K-means had much lower accuracy (20.3%), suggesting that the distance based weighting did not benefit clustering with these data.
 
-Optimal cluster methods resulted in notably fewer clusters (ranging from k = 1 to 10) than the actual number of Pokemon types (18). The elbow method suggested k = 3, silhouette suggested k = 2, CH index suggested k = 1, and gap statistics suggested k = 10. Using k = 3, the accuracy was 17.2%, which is moderate as the types remaining were grass, water and psychic, which make up about 30.5% of the dataset. Overall, these results indicates that Pokemon numeric stats do not naturally cluster into distinct groups corresponding directly to each of the 18 types.
-
 ```{r, echo=FALSE}
 kable(data.frame(
   Method = c("K-means", "K-means++", "Weighted K-means", "Optimal K-means K = 3"),
   Accuracy = c(kmeans_stats_acc, kmeans_stats_pp_acc, kmeans_w_stats_acc, kmeans_stats_opt_acc)
 ), caption = "Clustering Method Accuracies on Stats Data")
 ```
+
+Optimal cluster methods resulted in notably fewer clusters (ranging from k = 1 to 10) than the actual number of Pokemon types (18). The elbow method suggested k = 3, silhouette suggested k = 2, CH index suggested k = 1, and gap statistics suggested k = 10. Using k = 3, the accuracy was 17.2%, which is moderate as the types remaining were grass, water and psychic, which make up about 30.5% of the dataset. Overall, these results indicates that Pokemon numeric stats do not naturally cluster into distinct groups corresponding directly to each of the 18 types.
 
 In the image dataset, comparing standard K-means and K-means++, the clusters had a wss of 677488.2 and 696824.9 respectively, and bss of 288142.1 and 268805.4 respectively. This suggests the image dataset creates more distinct clusters with standard K-means clustering.
 
