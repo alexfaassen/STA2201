@@ -1,0 +1,90 @@
+---
+title: "test"
+author: "JZ"
+date: "2025-04-04"
+output: pdf_document
+---
+
+```{r include = FALSE, echo = FALSE}
+## Libraries
+library(ggplot2)
+library(patchwork)
+library(forcats)
+library(knitr)
+```
+
+## Supervised Model
+
+This section explores the performance of supervised models on the Pokemon stats dataset (note that results for the Pokemon images dataset is not presented as they provide no inferential capabilities). The purpose is twofold: to provide a baseline accuracy benchmark to compare the unsupervised models to, and to help determine whether we can predict Pokemon type. To do this we will run two models, linear discriminant analysis and gradient boosting. Linear discriminant analysis uses Bayes classifier to determine linear decision boundaries between types. As such, it is flexible to outliers, of which there are quite a few in our datasets, though it naturally performs worse when decision boundaries are non-linear, which is also the case. Gradient boosting is (at a high level) an ensemble learning algorithm based that iteratively fits decision trees on the previous residuals and updates prediction. In our classification setting, we use the log odds as the response and run the model for each class at each iteration. The major benefit here is that gradient boosting works quite well still with non-linear, non-separable data, though the downside is overfitting (which we can mitigate with hyperparameter tuning). The models are run on the same PCA dimension-reduced data as in the clustering section. Between the two models, we hope to learn the statistical makeup up different types of Pokemon.
+
+In these supervised models, we use 80-20 stratified train-test splits. This means within each Pokemon type, we choose 80% of the Pokemon to be in training set, and remaining 20% in test set. This will prevent over representation of certain types in each split, which will effect prediction accuracy for that specific type. This is particularly prevelant when we sub-group by generation, which results in small overall numbers of each Pokemon type.
+
+## Linear Discriminant Analysis
+
+We start by running LDA on the entire PCA-reduced Pokemon stats dataset. The prior probabilities used are the types proportions. Results are presented in Figure 8 and Table 4. Our two-dimensional plots show a lack of linear separability, however incorporating all dimensions, LDA does a good job of classification, as evidence by the training accuracy hovering around 88%. Test accuracy is essentially the same as train accuracy, showing the model does not suffer from overfitting, generalizing very well. We run reduced-rank LDA as a form of regularization, however there are no improvements to test accuracy by using low-dimensions. This can be partially explained by the fact we have already applied PCA to the original data, which itself is a rank-reduction technique.
+
+
+```{r, echo=FALSE}
+load("./Figures/Lda_full.RData")
+lda_full
+```
+
+```{r, echo=FALSE}
+load("./Figures/Lda_full_res.RData")
+
+kable(lda_full_res, caption = "LDA Accuracy for Stats Data")
+```
+
+
+We next run LDA individually on each generation of Pokemon. Results are presented in Figure 9 for generation 1 and Table 5 for generation 1 to 4. Visually, looking at the first 2 components, LDA is able to cleanly separate types with linear boundaries. All 20 components are almost entirely linearly separable by hyperplanes. Accordingly the train accuracy is at worst 95% in each generation, meaning near perfect classification. We do however see that test accuracy is lower by on average 11% for each generation, meaning that there is some overfitting. 
+
+From this we can conclude that the generation of the Pokemon generation is a blocking variable in the classification of type, and it is better to run models on each individual generatio. This can partly be explained by the non-standardization of both power level (ex. health, attack) and type across generations due to terrain (in the Pokemon world), number of legendaries etc. 
+
+```{r, echo=FALSE}
+load("./Figures/Lda_gen1.RData")
+lda_gen1
+```
+
+
+```{r, echo=FALSE}
+load("./Figures/Lda_gen_res.RData")
+
+kable(comb_error, caption = "LDA Accuracy for Stats Data - by Generation")
+```
+
+## Gradient Boosting
+
+We run gradient boosting (XGBoost) on the probability of each Pokemon being a specific type. Results of these models are displayed in Table 6. To keep this from becoming a hyperparameter tuning exercise, we used the values 100 iterations (trees), max depth of 3, while tuning for shrinkage factor, which is optimal around 0.2. The training accuracy is near perfect, however, we do see loss of accuracy on the test, which is consistent with our knowledge that gradient does tend to overfit data. Figure 10 shows which Pokemon in the test set were missclassifed. We also ran the gradient boosting on each specific generation, and again test accuracy noticeably improves. 
+
+These results show that LDA is the superior statistical method in predicting Pokemon type. This is due to its flexibility in model fit, as gradient boosting suffers from overfitting. Overall, these results show that we are able to predict Pokemon type based on statistics with high accuracy. 
+
+
+```{r}
+load("./Figures/GBM_res.RData")
+kable(accuracy_gb, caption = "Gradient Boosting Accuracy")
+```
+
+
+```{r}
+load("./Figures/GBM_plot.RData")
+gbm_plot
+```
+
+
+
+
+# Discussion
+
+- Discuss model performance
+- Limitations of methodology
+  - Potential sources of bias
+- Challenges encountered
+- Recommendations for overcoming these + improvements for future work
+
+Overall, the models did a far better job of predicting Pokemon type than we had originally anticipated. As Pokemon enjoyers, oftentimes there is little rhyme or reason to why certain types have specific attributes, as it is Pokemon specific. We thought the structure of the data may not capture the complexity of the Pokemon types in a way that creates efficient and distinct clusters. However, clustering on Pokemon stats still resulted in around 50% classification accuracy (across 18 classes), which though not great, beat expectations. Supervised learning algorithms had very high test accuracy, showing that classification based on Pokemon stats is quite applicable. On the other hand, classification based on Pokemon image was not successful, with low accuracy in both supervised and unsupervised settings.
+
+A significant limitation we faced is non-uniformity between number of each Pokemon types. Notably, fairy and dragon types were not even introduced until later generations, meaning there is a comparative lack of them in the dataset. In supervised models, train-test splits used stratification to account for this issue. In unsupervised learning, it caused an inability to cluster together groups with comparatively low numbers, with most clusters being predominantly 'water' or 'normal' types. Another limitation is the presence of dual typing, meaning Pokemon have a primary and secondary type, which introduces a confounding factor. For example, fire-fighting Pokemon and fire-psychic Pokemon are quite different, which will make it more difficult to accuratley classify the Pokemon type.
+
+Our calculation of classification accuracy in clustering is biased by the non-uniformity of Pokemon types. Since we assign each cluster prediction to the cluster mode type, types like 'water' and 'normal', which make up the bulk of the dataset will naturally be predicted more. This means that classification accuracy is inflated by not prediciting the low-number types like fairy and flying. In fact, if we ensured that each type was only predicted for a single cluster, accuracy drops sharply. Another possible source of bias is our use of the 'against_(specific type)' variables. Pokemon enforces the laws of nature, and so some types will fare very well against others (ex. water against fire). Though this is not inherently wrong to include, it does not help answer our research question, as these variables are performance metrics rather than fighting attributes or appearance. In fact, if we only use fighting attributes classification accuracy for K-means drops to 29%. 
+
+Some of these biases and limitations like non-uniformity of Pokemon types is intrinsic and hard to correct for (specifically in unsupervised models). We can account for dual typing in supervised models by classifying each hybrid type individually, though this may run into problems with low samples size for individual hyprid types. When working with Pokemon image data, we can change our approach from treating each pixel as a variable to creating our own descriptional variables from the images such as 'presence_of_(colour)' and 'number_of_non-white_pixels'. In this way we can hopefully cluster based on image characteristics, which do change by type (for example fire Pokemon often have red). Additionally, we can try out different types of models for both supervised and unsupervised learning, like Gaussian mixture models. 
