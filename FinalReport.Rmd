@@ -41,7 +41,7 @@ This project investigates whether a Pokémon’s type can be predicted from its 
 - Isaac Baguisa: Stats dimension reduction, Unsupervised models, Discussion
 - Alex Faassen: Data pre-processing, Data exploration, Image dimension reduction
 
-**GitHub:** [STA2201 - Predicting Pokémon Types with Clustering and Classification](https://github.com/alexfaassen/STA2201)
+**GitHub:** https://github.com/alexfaassen/STA2201
 
 # Introduction
 
@@ -58,8 +58,6 @@ Our analysis is based on two publicly available Kaggle datasets:
 
 ## Pokémon Image Dataset
 
-**URL:** [Pokémon Image Dataset](https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types)
-
 The Pokémon Image Dataset consists of 809 PNG files representing unique images of Pokémon from generations 1 through 7. Each file consists of a 3-dimensional array of dimensions 120 by 120 by 4. The first 2 slices represent a 120 by 120 grid of pixels, and the 3rd slice represents the 4 RGBA channels (Red, Blue, Green, Alpha), the colour and transparency assignments of each pixel.
 
 ```{r fig:ex_images, fig.cap = "Images of Pikachu (Primary type: Electric) and Charizard (Primary Type: Charizard) from the Pokémon Image Dataset.", echo=FALSE}
@@ -69,8 +67,6 @@ p1 + p2 # Uses library(patchwork) - loaded at top.
 ```
 
 ## Pokémon Stats Dataset
-
-**URL:** [The Complete Pokémon Dataset](https://www.kaggle.com/datasets/rounakbanik/pokemon)
 
 This structured dataset contains 41 variables for 801 Pokémon. These features include:
 
@@ -292,6 +288,12 @@ A significant limitation we faced is non-uniformity between number of each Pokem
 Our calculation of classification accuracy in clustering is biased by the non-uniformity of Pokemon types. Since we assign each cluster prediction to the cluster mode type, types like 'water' and 'normal', which make up the bulk of the dataset will naturally be predicted more. This means that classification accuracy is inflated by not predicting the low-number types like fairy and flying. In fact, if we ensured that each type was only predicted for a single cluster, accuracy drops sharply. Another possible source of bias is our use of the 'against_(specific type)' variables. Pokemon enforces the laws of nature, and so some types will fare very well against others (ex. water against fire). Though this is not inherently wrong to include, it does not help answer our research question, as these variables are performance metrics rather than fighting attributes or appearance. In fact, if we only use fighting attributes classification accuracy for K-means drops to 29%. 
 
 Some of these biases and limitations like non-uniformity of Pokemon types is intrinsic and hard to correct for (specifically in unsupervised models). We can account for dual typing in supervised models by classifying each hybrid type individually, though this may run into problems with low samples size for individual hybrid types. When working with Pokemon image data, we can change our approach from treating each pixel as a variable to creating our own descriptional variables from the images such as 'presence_of_(colour)' and 'number_of_non-white_pixels'. In this way we can hopefully cluster based on image characteristics, which do change by type (for example fire Pokemon often have red). Furthermore, we combine these image characteristics with the statistics dataset, and run analysis on that. Additionally, we can try out different types of models for both supervised and unsupervised learning, like Gaussian mixture models. 
+
+# References
+
+The Complete Pokémon Dataset: https://www.kaggle.com/datasets/rounakbanik/pokemon
+
+Pokémon Image Dataset: https://www.kaggle.com/datasets/vishalsubbiah/pokemon-images-and-types
 
 
 
