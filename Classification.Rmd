@@ -14,7 +14,7 @@ library(gbm)
 setwd('/Users/JZ/Downloads/STA2201-main')
 load("./Data/pokemon.RData")
 load("./Data/dr_pokemon2.RData")
-stats2 = read.csv('pokedex.csv')
+stats2 = read.csv('./Data/pokedex.csv')
 #stats = read.csv('.Data/pokemon_stats.csv')
 ```
 
