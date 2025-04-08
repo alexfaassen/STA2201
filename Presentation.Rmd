@@ -29,6 +29,8 @@ load("Clustering/cluster_res.RData")
 
 **Pokémon Typing:** Game mechanic (i.e. pairwise interactions), but also a conceptual grouping based on traits like colour, strength, and theme.
 
+*Can clustering and classification methods uncover or predict a Pokémon’s type based on its image and statistical features?*
+
 ## Example: Pikachu and Charizard
 
 ```{r fig.height=6, fig.width=12}
@@ -36,16 +38,6 @@ p1_mod = p1 + theme(plot.title = element_text(size = 20, hjust = 0.5))
 p2_mod = p2 + theme(plot.title = element_text(size = 20, hjust = 0.5))
 p1_mod + p2_mod
 ```
-
-## Approach
-
-*Can clustering and classification methods uncover or predict a Pokémon’s type based on its image and statistical features?*
-
-Methods:
-
-- **Dimensionality reduction:** PCA
-- **Clustering:** k-means
-- **Classification models:** LDA, Gradient boosting
 
 ## Data Description
 
@@ -69,6 +61,14 @@ type_attack + type_sp_attack
 ## Primary type distribution
 type_dist
 ```
+
+## Methods
+
+- **Dimension reduction:** PCA
+  - Images and Stats
+- **Clustering:** k-means
+- **Classification:** LDA, Gradient boosting
+  - For comparison
 
 ## Image Dimension Reduction: PCA
 
