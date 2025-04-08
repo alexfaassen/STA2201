@@ -52,7 +52,10 @@ From generations 1-7:
 
 ```{r fig.height=5, fig.width=12}
 ## Attack vs. Sp. Attack stat distributions
-type_attack + type_sp_attack
+# type_attack + type_sp_attack
+atk_mod = type_attack + theme(plot.title = element_text(size = 20, hjust = 0.5))
+sp_mod = type_sp_attack + theme(plot.title = element_text(size = 20, hjust = 0.5))
+atk_mod + sp_mod
 ```
 
 ## Primary Type Distribution
