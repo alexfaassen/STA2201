@@ -134,4 +134,93 @@ knitr::include_graphics("Figures/clustering_assignments_imgs.png")
 
 ## Supervised Model
 
-## Results
+- Main purposes:
+  - Baseline accuracy measurement for clustering analysis
+  - Determine whether there are distinguishable features for each type
+- 2 models:
+  - Linear Discriminant Analysis
+  - Gradient Boosting
+  
+## Methods
+
+- Use PCA reduced datasets
+- 80-20 train-test split, stratified for Pokemon types
+- **Linear Discriminant Analysis:** 
+  - full analysis and rank-reduced DA for $L=1,...,10$
+  - Relatively robust to outliers
+- **Gradient Boosting:** 
+  - Tuned for learning rate, max depth = 3, itertions = 100
+  - Good with non-linear data
+  
+## LDA: Full
+```{r, echo=FALSE}
+load("./Figures/Lda_full.RData")
+lda_full
+```
+
+## LDA Accuracy
+```{r, echo=FALSE}
+load("./Figures/Lda_full_res.RData")
+
+kable(lda_full_res, caption = "LDA Accuracy for Stats Data")
+```
+  
+## LDA Accuracy: By Generation
+```{r, echo=FALSE}
+load("./Figures/Lda_gen_res.RData")
+
+kable(comb_error, caption = "LDA Accuracy for Stats Data - by Generation")
+```
+
+## Gradient Boosting: Results
+```{r}
+load("./Figures/GBM_plot.RData")
+gbm_plot
+```
+
+## Gradient Boosting Accuracy
+
+```{r}
+load("./Figures/GBM_res.RData")
+kable(accuracy_gb, caption = "Gradient Boosting Accuracy")
+```
+
+  
+## Limitation: Non-uniformity in Pokemon types
+
+```{r}
+ggplot() + geom_histogram(aes(stats$type1), stat = 'count') +
+  labs(x = 'Type', title = 'Histogram of Pokemon Type')
+```
+
+## Limitation: Dual Typing
+
+```{r}
+ggplot() + geom_histogram(aes(stats[stats$type1 == 'water',]$type2), stat = 'count') +
+  labs(x = 'Type', title = 'Histogram of Pokemon Type')
+```
+
+## Biases
+
+- Computation of classification accuracy
+  - non-uniformity of Pokemon types
+- Use of 'against_(type)' variables
+  -inflates accuracy by ~20%
+  
+## Recommendations
+
+- Tackle the limitations and biases we mentioned
+- Consider confounding variables with (ex. is_legendary)
+- Use descriptional image stats rather then image pixels directly
+- Cross validation on Pokemon generation
+- Try other models - ex. GMM for clustering
+
+
+
+
+
+
+
+
+
+
